@@ -9,6 +9,9 @@
 // This sourcecode has not been minified or obfuscated in any way. Enjoy.
 //
 
+var app = null;
+var BrowserWindow = null;
+
 if (typeof(process) !== "undefined" && process.versions.electron)
 {
     app = require('@electron/remote').app;
