@@ -43,7 +43,7 @@ if (this.enabled)
     	// Draw the background of the EnemyInfo
     	if (this.enemy !== null && this.framesSinceDeath < 20 && this.framesSinceUpdate < this.cooldown)
     	{
-    		var rightEdge = 1800;
+		var rightEdge = getVirtualScreenWidth() - 120;
     		var topEdge = 150;
     		var margin = 10;
     		sstext.fontSize = this.fontSize/3;
@@ -95,7 +95,7 @@ if (this.enabled)
     		
     		sstext.alpha =  1.0 * alpha;
 			sstext.DrawText(this.enemy.displayName,Math.floor((rightEdge - width / 2)/3),Math.floor((topEdge+height-15)/3));
-			
+
 			ctx.globalAlpha = 1.0;
 		}
 		

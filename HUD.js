@@ -127,6 +127,7 @@ if (this.enabled)
 		ctx.save();
 	
 		var ratioTo1080p =  c.height / 1080.0;
+		var virtualScreenWidth = getVirtualScreenWidth();
 		
 		// Arrange drawing so that we are in a frame that is 1920x1080 with the origin
 		// on the upper right
@@ -139,10 +140,10 @@ if (this.enabled)
 		var sexBarPosX = 41;
 		var sexBarPosY = 62;
 	
-		var corruptionBarPosX = 1920 - this.corruptionBarImage.width * pxScale - 8;
+		var corruptionBarPosX = virtualScreenWidth - this.corruptionBarImage.width * pxScale - 8;
 		var corruptionBarPosY = 8;
 	
-		var dominationBarPosX = 1920 - this.dominationBarImage.width * pxScale - 8;
+		var dominationBarPosX = virtualScreenWidth - this.dominationBarImage.width * pxScale - 8;
 		var dominationBarPosY = 62;
 		
 		ctx.globalAlpha = this.hudAlpha;
@@ -174,7 +175,7 @@ if (this.enabled)
 						this.healthBarFilledImage.height * pxScale
 					  );
 		}
-			
+
 		if (sexWidth > 0)
 		{	  
 			this.sexBarFilledImage.Draw(	
@@ -314,7 +315,7 @@ if (this.enabled)
     		
     		for (var i=0; i < this.hudMessage.length; i++)
     		{
-    			sstext.DrawTextWithShadow(this.hudMessage[i],320,87+i*33);
+			sstext.DrawTextWithShadow(this.hudMessage[i],c.width/2,87+i*33);
     		}
 		}
 		
@@ -368,7 +369,7 @@ HUD.prototype.CollectOrb = function(orb)
 	
 	// Translate the orb's position to HUD coordinates
 	var newPos = camera.matrix.mapPointFromLocalToWorld({x:orb.posX,y:orb.posY});
-	orb.posX = linearRemap(newPos.x, 0, c.width, 0, 1920);
+	orb.posX = linearRemap(newPos.x, 0, c.width, 0, getVirtualScreenWidth());
 	orb.posY = linearRemap(newPos.y, 0, c.height, 0, 1080);
 	
 	// Set the orb's destination

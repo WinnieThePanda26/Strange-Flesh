@@ -38,10 +38,10 @@ GlobalLight.prototype.Draw = function()
 		// on the upper right
 		ctx.setTransform(ratioTo1080p, 0, 0, ratioTo1080p, 0, 0);
 		
-    	//ctx.globalCompositeOperation = "overlay";
+		//ctx.globalCompositeOperation = "overlay";
     	ctx.globalAlpha=this.alpha;
 		ctx.fillStyle = this.lightColor;
-		ctx.fillRect(0,0,1920,1080);
+		ctx.fillRect(0,0,getVirtualScreenWidth(),1080);
     	ctx.globalAlpha=1.0;
     	//ctx.globalCompositeOperation = "source-over";
 

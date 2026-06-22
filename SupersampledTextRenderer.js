@@ -30,8 +30,31 @@ function SupersampledTextRenderer()
 	this.isClear = true;
 };
 
+SupersampledTextRenderer.prototype.EnsureCanvasSize = function()
+{
+	var targetWidth = 1920;
+	var targetHeight = 1080;
+	if (typeof(c) !== "undefined" && c !== null)
+	{
+		targetWidth = c.width * 3;
+		targetHeight = c.height * 3;
+	}
+	if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight)
+	{
+		this.canvas.width = targetWidth;
+		this.canvas.height = targetHeight;
+		this.context = this.canvas.getContext("2d");
+		this.context.imageSmoothingEnabled = false;
+		this.context.webkitImageSmoothingEnabled = false;
+		this.context.mozImageSmoothingEnabled = false;
+		this.context.setTransform(1, 0, 0, 1, 0.0, 0.0);
+		this.isClear = true;
+	}
+};
+
 SupersampledTextRenderer.prototype.DrawText = function(text, x, y, fontSize, fillStyle, alpha, textAlign, textBaseline)
 {
+	this.EnsureCanvasSize();
 	this.isClear = false;
 	
 	if (typeof fontSize !== 'undefined')
@@ -99,6 +122,7 @@ SupersampledTextRenderer.prototype.DrawTextWithOutline = function(text, x, y, co
 
 SupersampledTextRenderer.prototype.Blit = function()
 {
+	this.EnsureCanvasSize();
 	if (!this.isClear)
 	{
 		// Draw the contents of the internal canvas to the game's render context
@@ -108,9 +132,10 @@ SupersampledTextRenderer.prototype.Blit = function()
 
 SupersampledTextRenderer.prototype.Clear = function()
 {
+	this.EnsureCanvasSize();
 	if (!this.isClear)
 	{
-		this.context.clearRect(0, 0, 1920, 1080);
+		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.isClear = true;
 	}
 };

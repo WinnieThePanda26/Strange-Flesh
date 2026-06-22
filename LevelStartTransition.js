@@ -100,7 +100,7 @@ LevelStartTransition.prototype.Draw = function()
 	
 	// Draw the background frame
 	ctx.fillStyle = this.bgColor;
-	ctx.fillRect(0, 0, 1920, 1080);
+	ctx.fillRect(0, 0, getVirtualScreenWidth(), 1080);
 	
 	var time = normalizeValue(this.timer,0,this.length);
 	time = (Math.pow(time+1,3)-1)/7;

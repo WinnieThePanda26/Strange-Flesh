@@ -96,6 +96,8 @@ var displayC;
 var displayCtx;
 var updateTimer;
 var camera;
+var nativeRenderWidth = 640;
+var nativeRenderHeight = 360;
 var player;
 var playerStack = [];
 var playerFirstSpawn = true;
@@ -208,8 +210,8 @@ function StrangeFlesh()
 	
 	// Setup the internal drawing canvas
 	c = document.createElement("canvas");
-	c.width = 640;
-	c.height = 360;
+	c.width = nativeRenderWidth;
+	c.height = nativeRenderHeight;
 	ctx = c.getContext("2d");
 
 	editPanel = document.getElementById("editPanel");
@@ -348,7 +350,7 @@ function saveGame()
 						"enemiesCorrupted": enemiesCorrupted,
 						"totalEnemies": totalEnemies
 					};
-					
+
 	gameOverResumeSaved = true;
 	neverSaved = false;
 					
@@ -456,6 +458,7 @@ function loadSettings()
 						"renderMode": 0,
 						"scalingQuality": 0,
 						"enableRetina" : false,
+						"widescreenMode" : 0,
 						"musicLevelGameplay" : 0.5,
 						"baseSFXBoost" : 1.0,
 						"fullscreenMode" : true,
@@ -883,6 +886,25 @@ function tick()
 
 var storedWidth = 0;
 var storedHeight = 0;
+function getTargetAspectRatio()
+{
+	var targetAspectRatio = 16.0 / 9.0;
+	if (settings.widescreenMode === 1)
+		targetAspectRatio = clamp(window.innerWidth / window.innerHeight, 16.0 / 9.0, 21.0 / 9.0);
+	return targetAspectRatio;
+};
+
+function resizeRenderCanvas(targetAspectRatio)
+{
+	c.height = nativeRenderHeight;
+	c.width = Math.max(nativeRenderWidth, Math.round(nativeRenderHeight * targetAspectRatio));
+};
+
+function getVirtualScreenWidth()
+{
+	return 1080 * (c.width / c.height);
+};
+
 function resizeCanvas(force)
 {
 	if (force || window.innerWidth !==  storedWidth || window.innerHeight !== storedHeight)
@@ -897,8 +919,9 @@ function resizeCanvas(force)
 		
 		var w = window.innerWidth;
 		var h = window.innerHeight;
-		var snapH = 640;
-		var snapW = 360;
+		var targetAspectRatio = getTargetAspectRatio();
+		var snapH = nativeRenderHeight;
+		var snapW = nativeRenderWidth;
 		var snapMultipleH = 640;
 		var snapMultipleV = 360;
 		
@@ -919,13 +942,13 @@ function resizeCanvas(force)
 		}
 		
 		// If we need to size by height...
-		if ((w * 9.0/16.0) > h)
+		if ((w / targetAspectRatio) > h)
 		{
 			// Snap h to the nearest multiple of 360
 			snapH = Math.round(Math.floor(h / snapMultipleV) * snapMultipleV);
 			if (snapH < snapMultipleV)
 				snapH = snapMultipleV;
-			snapW = Math.round(snapH * (16.0/9.0));
+			snapW = Math.round(snapH * targetAspectRatio);
 		}
 		else
 		{
@@ -933,20 +956,22 @@ function resizeCanvas(force)
 			snapW = Math.round(Math.floor(w / snapMultipleH) * snapMultipleH);
 			if (snapW < snapMultipleH)
 				snapW = snapMultipleH;
-			snapH = Math.round(snapW * (9.0/16.0));
+			snapH = Math.round(snapW / targetAspectRatio);
 		}
-		
+
+		resizeRenderCanvas(targetAspectRatio);
+
 		if (settings.scalingQuality == 1 || (settings.scalingQuality == 0 && lowFramerateDetected))
 		{
-			var mul = snapW / 640.0;
+			var mul = snapW / c.width;
 			
 			if (settings.renderMode == 0)
 				mul = Math.round(mul);
 				
-			displayC.width = 640;
-			displayC.height = 360;
-			displayC.style.width = 640 + "px";
-			displayC.style.height = 360 + "px";
+			displayC.width = c.width;
+			displayC.height = c.height;
+			displayC.style.width = c.width + "px";
+			displayC.style.height = c.height + "px";
 			displayC.style.transformOrigin = "0% 0%";
 			displayC.style.transform = "scale("+mul+", "+mul+")";
 		}
@@ -956,8 +981,9 @@ function resizeCanvas(force)
 			displayC.style.transform = "scale("+mul+", "+mul+")";
 			if (snapW * devicePixelRatio > 1920 || snapH * devicePixelRatio > 1080)
 			{
-				displayC.width = 1920;
-				displayC.height = 1080;
+				var displayScale = Math.min(1920 / (snapW * devicePixelRatio), 1080 / (snapH * devicePixelRatio));
+				displayC.width = Math.round(snapW * devicePixelRatio * displayScale);
+				displayC.height = Math.round(snapH * devicePixelRatio * displayScale);
 			}
 			else
 			{
@@ -1068,7 +1094,7 @@ function drawAll()
 			ctx.setTransform(ratioTo1080p, 0, 0, ratioTo1080p, 0, 0);
 			ctx.globalAlpha = linearRemap(startupTimer, 60, 180, 1, 0);
 			ctx.fillStyle = "#e30f4b";
-			ctx.fillRect(0,0,1920,1080);
+			ctx.fillRect(0,0,getVirtualScreenWidth(),1080);
 			ctx.globalAlpha = 1.0
 			ctx.restore();
 			player.Draw();
@@ -1108,7 +1134,7 @@ function drawAll()
 			ctx.setTransform(ratioTo1080p, 0, 0, ratioTo1080p, 0, 0);
 			ctx.globalAlpha = linearRemap(startupTimer, 0, 60, 1, 0);
 			ctx.fillStyle = "#e30f4b";
-			ctx.fillRect(0,0,1920,1080);
+			ctx.fillRect(0,0,getVirtualScreenWidth(),1080);
 			ctx.globalAlpha = 1.0
 			ctx.restore();
 		}

@@ -776,6 +776,12 @@ function ShowSettingsMenu(ingame)
 							}
 						} 
 					},
+					{ "element":"multi", "label":"Aspect Ratio", "options":["16:9","Widescreen"], "selected":settings.widescreenMode, "onChange":function()
+						{
+							settings.widescreenMode = this.selected;
+							resizeCanvas(true);
+						}
+					},
 					{ "element":"multi", "label":"Render Mode", "options":["Perfect","Rough","Blurry"], "selected":settings.renderMode, "onChange":function()
 						{ 
 							settings.renderMode = this.selected;

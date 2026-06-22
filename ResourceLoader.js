@@ -1020,7 +1020,8 @@ ResourceLoader.prototype.Draw = function()
 		ctx.globalCompositeOperation = "none"
 		ctx.globalAlpha=1;
 		ctx.fillStyle = "#000000";
-		ctx.fillRect(0, 0, 640, 360);
+		ctx.fillRect(0, 0, c.width, 360);
+		var screenCenterX = c.width / 2.0;
 		
 		if (this.loadingError)
 		{
@@ -1037,8 +1038,8 @@ ResourceLoader.prototype.Draw = function()
 				ctx.font = "12px \"Lucida Console\"";
 			}
 			
-			ctx.fillText("Well, shit.",320,157);
-			ctx.fillText("No game for you I guess.",320,180);
+			ctx.fillText("Well, shit.",screenCenterX,157);
+			ctx.fillText("No game for you I guess.",screenCenterX,180);
 			if (this.GetFont("alagard").loaded)
 			{
 				ctx.font = "10px alagard";
@@ -1050,7 +1051,7 @@ ResourceLoader.prototype.Draw = function()
 			for (var i=0; i < this.errorMessages.length; i++)
 			{
 				if (this.errorMessages[i] !== null)
-					ctx.fillText(this.errorMessages[i],320,180 + 24 + i*12);
+					ctx.fillText(this.errorMessages[i],screenCenterX,180 + 24 + i*12);
 			}
 		}
 		else
@@ -1072,18 +1073,18 @@ ResourceLoader.prototype.Draw = function()
 				ctx.font = "14px \"Lucida Console\"";
 			}
 			
-			ctx.fillText("Getting Stranger...",320,180);
+			ctx.fillText("Getting Stranger...",screenCenterX,180);
 			
 			if (this.iOS && this.loadPercentage > 99)
 			{
 				if (this.webAudioLocked)
-					ctx.fillText("Tap to Start", 320, 180 + 16);
+					ctx.fillText("Tap to Start", screenCenterX, 180 + 16);
 				else
-					ctx.fillText("Starting...", 320, 180 + 16);
+					ctx.fillText("Starting...", screenCenterX, 180 + 16);
 			}
 			else
 			{
-				ctx.fillText(String(Math.round(this.loadPercentage))+"%",320, 180 + 16);
+				ctx.fillText(String(Math.round(this.loadPercentage))+"%",screenCenterX, 180 + 16);
 			}
 			
 			if (this.GetFont("alagard").loaded)
@@ -1098,7 +1099,7 @@ ResourceLoader.prototype.Draw = function()
 			for (var i=0; i < this.errorMessages.length; i++)
 			{
 				if (this.errorMessages[i] !== null)
-					ctx.fillText(this.errorMessages[i],320,180 + 33 + i*12);
+					ctx.fillText(this.errorMessages[i],screenCenterX,180 + 33 + i*12);
 			}
 			
 		}
