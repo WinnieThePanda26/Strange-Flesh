@@ -1,0 +1,9 @@
+{
+  "name": "strange-flesh-playtest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headless-browser playtest harness for Strange Flesh (drives the installed Chrome via puppeteer-core).",
+  "dependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}
