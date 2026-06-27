@@ -968,13 +968,28 @@ function resizeCanvas(force)
 
 		resizeRenderCanvas(targetAspectRatio);
 
+		// Largest rectangle of the target aspect ratio that fits the window. Fills the
+		// constraining axis (both axes when the window matches the aspect, e.g. widescreen)
+		// and letterboxes the other (e.g. 16:9 content shown on an ultrawide window). This
+		// is the on-screen (CSS) size; the backing buffer below stays integer-snapped for
+		// sharpness, and the small remaining stretch to this size is smoothed.
+		var fillW, fillH;
+		if ((w / targetAspectRatio) > h)
+		{
+			fillH = h;
+			fillW = Math.round(h * targetAspectRatio);
+		}
+		else
+		{
+			fillW = w;
+			fillH = Math.round(w / targetAspectRatio);
+		}
+
 		if (settings.scalingQuality == 1 || (settings.scalingQuality == 0 && lowFramerateDetected))
 		{
-			var mul = snapW / c.width;
-			
-			if (settings.renderMode == 0)
-				mul = Math.round(mul);
-				
+			// Scale the native-resolution buffer up to fill the window.
+			var mul = fillW / c.width;
+
 			displayC.width = c.width;
 			displayC.height = c.height;
 			displayC.style.width = c.width + "px";
@@ -998,12 +1013,17 @@ function resizeCanvas(force)
 				displayC.height = snapH * devicePixelRatio;
 			}
 		
-			displayC.style.width = snapW + "px";
-			displayC.style.height = snapH + "px";
+			// Crisp integer-scaled backing buffer; CSS stretches it to fill the window.
+			displayC.style.width = fillW + "px";
+			displayC.style.height = fillH + "px";
 		}
-		
-		displayC.style.marginTop = Math.round((h - snapH) / 2.0).toString() + "px";
-		displayC.style.marginLeft = Math.round((w - snapW) / 2.0).toString() + "px";
+
+		// Smooth the (usually small) final stretch to the fill size so it stays clean
+		// instead of producing uneven pixels from nearest-neighbor scaling.
+		displayC.style.imageRendering = "auto";
+
+		displayC.style.marginTop = Math.round((h - fillH) / 2.0).toString() + "px";
+		displayC.style.marginLeft = Math.round((w - fillW) / 2.0).toString() + "px";
 		
 		displayCtx.imageSmoothingEnabled = (settings.renderMode == 2);
 		displayCtx.webkitImageSmoothingEnabled = (settings.renderMode == 2);
