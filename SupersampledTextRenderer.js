@@ -26,6 +26,10 @@ function SupersampledTextRenderer()
 	this.textAlign = "center";
 	this.fillStyle = "#FFF";
 	this.textBaseline = 'alphabetic';
+
+	// Horizontal offset (in render-canvas pixels) added to all text. Used to center
+	// menus in widescreen, since this renderer is not affected by the ctx transform.
+	this.offsetX = 0;
 	
 	this.isClear = true;
 };
@@ -73,7 +77,7 @@ SupersampledTextRenderer.prototype.DrawText = function(text, x, y, fontSize, fil
 	this.context.font = (this.fontSize*3) + "px " + this.font;
 	this.context.fillStyle = this.fillStyle;
 	this.context.textBaseline = this.textBaseline;
-	this.context.fillText(text,x*3,y*3);
+	this.context.fillText(text,(x+this.offsetX)*3,y*3);
 };
 
 SupersampledTextRenderer.prototype.DrawTextWithShadow = function(text, x, y, color)

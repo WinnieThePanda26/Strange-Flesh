@@ -47,7 +47,7 @@ TitleCardMenu.prototype.Draw = function()
 		
 		// Arrange drawing so that we are in a frame that is 1920x1080 with the origin
 		// on the upper right
-		ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, 0, 0);
+		ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, getMenuOffsetX() * ratioTo360p, 0);
 		ctx.globalAlpha = 1.0;
 		ctx.fillStyle = "#000000";
 		ctx.fillRect(0,0,640,360);

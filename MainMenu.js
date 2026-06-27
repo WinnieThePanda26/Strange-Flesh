@@ -193,9 +193,9 @@ MainMenu.prototype.Draw = function()
 	var ratioTo360p =  c.height / 360.0;
 	// Arrange drawing so that we are in a frame that is 640x360 with the origin
 	// on the upper right
-	ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, 0, 0);
+	ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, getMenuOffsetX() * ratioTo360p, 0);
 	ctx.globalAlpha = 1.0;
-	
+
 	// Draw the background
 	ctx.fillStyle = "#000011";
 	ctx.fillRect(0,0,640,360);

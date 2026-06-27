@@ -905,6 +905,13 @@ function getVirtualScreenWidth()
 	return 1080 * (c.width / c.height);
 };
 
+// Horizontal offset (in the 360-high menu coordinate space) needed to center the
+// 640-wide menu area within the screen. Returns 0 at 16:9, positive in widescreen.
+function getMenuOffsetX()
+{
+	return Math.round((360.0 * (c.width / c.height) - 640) / 2.0);
+};
+
 function resizeCanvas(force)
 {
 	if (force || window.innerWidth !==  storedWidth || window.innerHeight !== storedHeight)
@@ -1016,13 +1023,28 @@ function drawAll()
 	}
 	
 	resizeCanvas(false);
-	
+
+	// Default: no text offset (gameplay HUD draws at native positions).
+	// The menu branch below sets this to center menu text in widescreen.
+	sstext.offsetX = 0;
+
 	if (GlobalResourceLoader.AllReady())
 	{
 		if (menuStack.length > 0)
 		{
 			frameTimes = [];
 			measuredFps = 0;
+
+			// Clear the whole screen to black first. Menus draw in a centered 640-wide
+			// space, so in widescreen this fills the pillarbox bars and prevents the
+			// uncovered sides from smearing the previous frame.
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.fillStyle = "#000000";
+			ctx.fillRect(0, 0, c.width, c.height);
+
+			// Center menu text horizontally to match the centered menu artwork.
+			sstext.offsetX = getMenuOffsetX();
+
 			menuStack[menuStack.length-1].Draw();
 			
 			if (watermarkEnabled)
