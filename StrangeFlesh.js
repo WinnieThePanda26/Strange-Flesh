@@ -459,6 +459,7 @@ function loadSettings()
 						"scalingQuality": 0,
 						"enableRetina" : false,
 						"widescreenMode" : 0,
+						"hudSize" : 1,
 						"musicLevelGameplay" : 0.5,
 						"baseSFXBoost" : 1.0,
 						"fullscreenMode" : true,
@@ -910,6 +911,20 @@ function getVirtualScreenWidth()
 function getMenuOffsetX()
 {
 	return Math.round((360.0 * (c.width / c.height) - 640) / 2.0);
+};
+
+// Overall scale multiplier for the HUD (health/sex/corruption/domination bars,
+// icons, lives). Multiplies the HUD's base 3x layout so the whole HUD shrinks or
+// grows as one unit. 1.0 == the original size; lower == smaller. Driven by the
+// "HUD Size" setting.
+function getHudScale()
+{
+	switch (settings.hudSize)
+	{
+		case 0:  return 0.6;   // Small
+		case 2:  return 1.0;   // Large (original size)
+		default: return 0.8;   // Normal
+	}
 };
 
 function resizeCanvas(force)

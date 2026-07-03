@@ -29,11 +29,13 @@ _Branch: `widescreen-aspect-ratio`_
 ### Shrink the HUD / oversized UI
 The health, sex, corruption, and domination bars are drawn at a hardcoded **3×**
 (`pxScale = 3.0` + `DrawSprite3x` in `HUD.js`). They dominate the screen at 1080p.
-- [ ] Introduce a dedicated HUD scale (e.g. `hudScale`) instead of the global 3×,
-      and parameterize the bar draws (replace `DrawSprite3x` with a scaled draw)
-- [ ] Re-anchor bars after scaling (health/sex top-left, corruption/domination
-      top-right via `getVirtualScreenWidth()`)
-- [ ] [?] Decide: fixed smaller scale, or a "HUD size" setting (Small/Normal/Large)
+- [x] Introduce a dedicated HUD scale (`getHudScale()`) that multiplies the HUD's
+      base 3× layout via the ctx transform — the whole HUD scales as one unit,
+      leaving the global `pxScale` (game world) untouched
+- [x] Re-anchor bars after scaling using a scaled `designWidth` so corruption/
+      domination stay pinned to the right edge in both 16:9 and widescreen
+- [x] Expose a "HUD Size" setting (Small 0.6 / Normal 0.8 / Large 1.0); default
+      Normal is 20% smaller than the old size, Large restores the original
 - [ ] Check EnemyInfo (boss/enemy nameplate) sizing for the same issue
 
 ### Difficulty settings (net-new — none exist today)
