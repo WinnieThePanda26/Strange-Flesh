@@ -214,6 +214,13 @@ include("Bartender.js");
 include("Music.js");
 // almost
 
+// Width of the virtual 1080-high coordinate space (see StrangeFlesh.js). Shared
+// files like GlobalLight.js call this when drawing full-screen fills.
+function getVirtualScreenWidth()
+{
+	return 1080 * (c.width / c.height);
+};
+
 function collisionCheckChanged()
 {
  	debug = document.getElementById("collisionCheckbox").checked ? 2 : 0;
