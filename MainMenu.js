@@ -196,9 +196,9 @@ MainMenu.prototype.Draw = function()
 	ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, getMenuOffsetX() * ratioTo360p, 0);
 	ctx.globalAlpha = 1.0;
 
-	// Draw the background
+	// Draw the background (cover the whole screen, including widescreen side areas)
 	ctx.fillStyle = "#000011";
-	ctx.fillRect(0,0,640,360);
+	ctx.fillRect(-getMenuOffsetX(),0,getMenuScreenWidth(),360);
 	
 	
 	var menuAnim = linearToSigmoidRemap(this.menuTimer,0,60);
@@ -323,7 +323,7 @@ MainMenu.prototype.Draw = function()
 	// Fade out
 	ctx.globalAlpha = 1-normalizeValue(this.timer, 0, 60);
 	ctx.fillStyle = "#000000";
-	ctx.fillRect(0,0,640,360);
+	ctx.fillRect(-getMenuOffsetX(),0,getMenuScreenWidth(),360);
 	ctx.globalAlpha = 1.0;
 	ctx.restore();
 };

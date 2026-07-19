@@ -46,7 +46,7 @@ ModalMessage.prototype.Draw = function()
 		ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, getMenuOffsetX() * ratioTo360p, 0);
 		ctx.globalAlpha = 1.0;
 		ctx.fillStyle = "#000000";
-		ctx.fillRect(0,0,640,360);
+		ctx.fillRect(-getMenuOffsetX(),0,getMenuScreenWidth(),360);
 		
 		sstext.fillStyle = "#FFF";
 		sstext.textAlign = "center";

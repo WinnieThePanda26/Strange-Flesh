@@ -40,37 +40,33 @@ GameOver.prototype.Draw = function()
 		var ratioTo1080p =  c.height / 1080.0;
 		
 		// Arrange drawing so that we are in a frame that is 1920x1080 with the origin
-		// on the upper right
+		// on the upper right. The game-over art is wider than 1920 (it gets cropped at
+		// 16:9); center it on the actual screen so widescreen reveals it evenly.
+		var virtualScreenWidth = getVirtualScreenWidth();
 		ctx.setTransform(ratioTo1080p, 0, 0, ratioTo1080p, 0, 0);
 		ctx.fillStyle = "#000000";
-		ctx.fillRect(0,0,1920,1080);
-		
+		ctx.fillRect(0,0,virtualScreenWidth,1080);
+
 		if (this.image !== null)
 		{
-			this.image.DrawSprite3x(0, 0);
+			this.image.DrawSprite3x(Math.round((virtualScreenWidth - this.image.width * 3.0) / 2.0), 0);
 		}
-		
+
 		ctx.fillStyle = "#FFF";
 		ctx.textAlign = "center";
 		ctx.font = "120px alagard";
-		drawTextWithShadow(this.message,960,1000);
-		
-		/*
-		ctx.globalAlpha = linearRemap(this.timer,0,60,1,0);
-		ctx.fillStyle = "#000000";
-		ctx.fillRect(0,0,1920,1080);
-		*/
-		
+		drawTextWithShadow(this.message,Math.round(virtualScreenWidth / 2.0),1000);
+
 		ctx.globalAlpha = linearRemap(this.timer,0,60,1,0);
 		if (this.closing)
 		{
 			ctx.fillStyle = "#e30f4b";
-			ctx.fillRect(0,0,1920,1080);
+			ctx.fillRect(0,0,virtualScreenWidth,1080);
 		}
 		else
 		{
-			ctx.drawImage(this.screenshot, 0, 0, 1920, 1080);
-			
+			ctx.drawImage(this.screenshot, 0, 0, virtualScreenWidth, 1080);
+
     	}
     	ctx.globalAlpha = 1.0;
     	

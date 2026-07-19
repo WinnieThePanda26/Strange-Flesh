@@ -913,6 +913,14 @@ function getMenuOffsetX()
 	return Math.round((360.0 * (c.width / c.height) - 640) / 2.0);
 };
 
+// Full screen width in the 360-high menu coordinate space (640 at 16:9, up to 840
+// in widescreen). From inside the offset menu frame, the whole screen spans
+// x = -getMenuOffsetX() .. -getMenuOffsetX() + getMenuScreenWidth().
+function getMenuScreenWidth()
+{
+	return Math.round(360.0 * (c.width / c.height));
+};
+
 // Overall scale multiplier for the HUD (health/sex/corruption/domination bars,
 // icons, lives). Multiplies the HUD's base 3x layout so the whole HUD shrinks or
 // grows as one unit. 1.0 == the original size; lower == smaller. Driven by the

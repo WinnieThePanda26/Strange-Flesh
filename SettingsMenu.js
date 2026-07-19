@@ -118,13 +118,14 @@ SettingsMenu.prototype.Draw = function()
 		// on the upper right (centered horizontally in widescreen)
 		ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, getMenuOffsetX() * ratioTo360p, 0);
 		
-		// Draw the screencap
+		// Draw the screencap (covers the whole screen; the captures share the
+		// screen's aspect ratio, so this doesn't distort in widescreen)
 		if (this.timer < 60 || this.closing)
 		{
 			if (this.topLevelMenu)
-				ctx.drawImage(this.backgroundImage, 0, 0, 640, 360);
+				ctx.drawImage(this.backgroundImage, -getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
 			else
-				ctx.drawImage(this.internalCanvas,  0, 0, 640, 360);
+				ctx.drawImage(this.internalCanvas,  -getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
 		}
 		
 		var alpha = 1;
@@ -136,7 +137,7 @@ SettingsMenu.prototype.Draw = function()
 		ctx.globalAlpha = alpha;
 		
 		// Draw the blurred buffer
-		ctx.drawImage(this.blurredBackgroundImage, 0, 0, 640, 360);
+		ctx.drawImage(this.blurredBackgroundImage, -getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
     	
     	sstext.textBaseline = 'middle';
 		
@@ -308,13 +309,13 @@ SettingsMenu.prototype.Draw = function()
 		if (this.timer < 60 || this.closing)
 		{
 			if (this.topLevelMenu)
-				ctx.drawImage(this.backgroundImage, 0, 0, this.backgroundImage.width, this.backgroundImage.height / 360 * 100, 0, 0, 640, 100);
+				ctx.drawImage(this.backgroundImage, 0, 0, this.backgroundImage.width, this.backgroundImage.height / 360 * 100, -getMenuOffsetX(), 0, getMenuScreenWidth(), 100);
 			else
-				ctx.drawImage(this.internalCanvas, 0, 0, this.internalCanvas.width, this.internalCanvas.height / 360 * 100, 0, 0, 640, 100);
+				ctx.drawImage(this.internalCanvas, 0, 0, this.internalCanvas.width, this.internalCanvas.height / 360 * 100, -getMenuOffsetX(), 0, getMenuScreenWidth(), 100);
 		}
-		
+
 		ctx.globalAlpha = alpha;
-		ctx.drawImage(this.blurredBackgroundImage, 0, 0, this.blurredBackgroundImage.width, this.blurredBackgroundImage.height / 360 * 100, 0, 0, 640, 100);
+		ctx.drawImage(this.blurredBackgroundImage, 0, 0, this.blurredBackgroundImage.width, this.blurredBackgroundImage.height / 360 * 100, -getMenuOffsetX(), 0, getMenuScreenWidth(), 100);
     	
     	// Now draw the title
     	sstext.alpha = alpha;

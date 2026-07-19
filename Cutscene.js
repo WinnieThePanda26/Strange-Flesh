@@ -271,15 +271,15 @@ Cutscene.prototype.Draw = function()
 		ctx.globalAlpha = normalizeValue(this.fadeOutTimer,0,this.fadeOutTime);
 		if (this.fadeOutTimer <= this.fadeOutTime)
 		{
-			// Draw the background frame
+			// Draw the background frame (cover the whole screen, including widescreen side areas)
 			if (this.fadeOutFrame !== null)
 			{
-				ctx.drawImage(this.fadeOutFrame, 0, 0, 640, 360);
+				ctx.drawImage(this.fadeOutFrame, -getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
 			}
 			else
 			{
 				ctx.fillStyle = this.fadeOutColor;
-				ctx.fillRect(0, 0, 640, 360);
+				ctx.fillRect(-getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
 			}
 		}
 		ctx.globalAlpha = 1;
@@ -289,15 +289,15 @@ Cutscene.prototype.Draw = function()
 		ctx.globalAlpha = 1-normalizeValue(this.fadeInTimer,0,this.fadeInTime);
 		if (this.fadeInTimer < this.fadeInTime)
 		{
-			// Draw the background frame
+			// Draw the background frame (cover the whole screen, including widescreen side areas)
 			if (this.fadeInFrame !== null)
 			{
-				ctx.drawImage(this.fadeInFrame, 0, 0, 640, 360);
+				ctx.drawImage(this.fadeInFrame, -getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
 			}
 			else
 			{
 				ctx.fillStyle = this.fadeInColor;
-				ctx.fillRect(0, 0, 640, 360);
+				ctx.fillRect(-getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
 			}
 		}
 		ctx.globalAlpha = 1;
