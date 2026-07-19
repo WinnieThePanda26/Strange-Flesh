@@ -17,6 +17,10 @@ system or rewrite to modules unless explicitly asked.
 
 ## Running it
 
+- The game must be **served over HTTP** (file:// fails — browsers block its level/asset
+  requests): `python3 serve.py` in the repo root serves it no-cache on :8000, then open
+  `http://localhost:8000/index.html` (or `/editor.html`). The playtest skill uses this
+  same server headlessly.
 - **`index.html`** → the game. Loads only `StrangeFlesh.js`, which then pulls in every other
   file via the `include()` helper (dynamic `<script>` injection). The full load order lives in
   `StrangeFlesh.js` right after the `include` definition — **if you add a new file, you must add
