@@ -26,7 +26,11 @@ GameOver.prototype.Show = function()
 		this.image = GlobalResourceLoader.GetSprite(level.gameOverScreen);
 	}
 	
-	this.screenshot = cloneCanvas1080p(c);
+	// Capture the display canvas: the HUD renders there (see HUD.DrawToDisplay),
+	// not on the internal render canvas c, so cloning c would miss the HUD bars.
+	// (This GameOver class is currently unused; the live game-over path is
+	// ShowGameOverCutscene, which already clones displayC.)
+	this.screenshot = cloneCanvas1080p(displayC);
 	
 	menuStack.push(this);
 }
