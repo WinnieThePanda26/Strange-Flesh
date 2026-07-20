@@ -93,9 +93,10 @@ function HUD(owner)
 	//this.ctx.mozImageSmoothingEnabled = false;
 	
 	this.orbs = [];
-	
+
 	// State
 	this.enabled = true;
+	this.displayDrawPending = false;
 };
 
 HUD.prototype.Reset = function()
@@ -116,17 +117,33 @@ HUD.prototype.Reset = function()
 	
 	this.hudAlpha = 0;
 	this.hudHidden = false;
+	this.displayDrawPending = false;
 }
 
+// The overlays pass draws onto the small internal canvas, where a shrunken HUD
+// (hudSize setting) would nearest-neighbor downscale its pixel art. Instead just
+// flag the draw here; blitInternalBuffer calls DrawToDisplay after the frame is
+// copied to the display canvas, so the HUD renders at full display resolution
+// (and its "screen" blends still composite against the gameplay pixels).
 HUD.prototype.Draw = function()
 {
+	this.displayDrawPending = this.enabled;
+};
+
+HUD.prototype.DrawToDisplay = function()
+{
+	this.displayDrawPending = false;
 if (this.enabled)
 {
+		// Swap the global context so all sprite helpers target the display canvas
+		var prevCtx = ctx;
+		ctx = displayCtx;
+
 		// Basically draw over everything
 		// Store the current transformation matrix
 		ctx.save();
-	
-		var ratioTo1080p =  c.height / 1080.0;
+
+		var ratioTo1080p =  displayC.height / 1080.0;
 		var hudScale = getHudScale();
 
 		// Arrange drawing so that we are in a frame that is 1920x1080 with the origin
@@ -264,7 +281,7 @@ if (this.enabled)
 		// Draw reflections
 		ctx.globalCompositeOperation = "screen";
 		this.healthBarReflectionImage.DrawSprite3x(healthBarPosX + 6, healthBarPosY + 6);
-		this.corruptionBarReflectionImage.DrawSprite3x(ctx ,corruptionBarPosX + 6,corruptionBarPosY + 3);
+		this.corruptionBarReflectionImage.DrawSprite3x(corruptionBarPosX + 6,corruptionBarPosY + 3);
 		this.dominationBarReflectionImage.DrawSprite3x(dominationBarPosX + 6,dominationBarPosY + 3);
 		ctx.globalCompositeOperation = "source-over";
 	
@@ -345,8 +362,11 @@ if (this.enabled)
     	}
     	
     	 ctx.globalAlpha = 1.0;
-		
+
     	ctx.restore();
+
+		// Put the global context back on the internal render canvas
+		ctx = prevCtx;
 	}
 };
 

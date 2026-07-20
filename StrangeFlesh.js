@@ -1232,13 +1232,18 @@ function blitInternalBuffer()
 {
 	// Now actually draw the contents of ctx to displayCtx
 	displayCtx.drawImage(c, 0, 0, displayC.width, displayC.height);
-	
+
 	// Clear the internal render canvas
 	ctx.save();
 	ctx.setTransform(1, 0, 0, 1, 0, 0);
 	ctx.clearRect(0, 0, c.width, c.height);
 	ctx.restore();
-	
+
+	// The HUD renders directly on the display canvas at full resolution (see
+	// HUD.Draw), on top of the blitted frame but under the supersampled text
+	if (typeof(hud) !== 'undefined' && hud !== null && hud.displayDrawPending)
+		hud.DrawToDisplay();
+
 	sstext.BlitAndClear();
 };
 
