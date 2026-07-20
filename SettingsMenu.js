@@ -113,35 +113,44 @@ SettingsMenu.prototype.Draw = function()
 		ctx.save();
 	
 		var ratioTo360p =  c.height / 360.0;
-		
+
+		// Scale menu content with the HUD size setting. Layout happens in a design
+		// space that grows as the scale shrinks (like HUD.js), so smaller settings
+		// also fit more items per screen. Backgrounds still fill the whole screen.
+		var hudScale = getHudScale();
+		var designHeight = 360 / hudScale;
+		var designWidth = getMenuScreenWidth() / hudScale;
+		var designOffsetX = getMenuOffsetX() / hudScale;
+		sstext.scale = hudScale;
+
 		// Arrange drawing so that we are in a frame that is 640x360 with the origin
 		// on the upper right (centered horizontally in widescreen)
-		ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, getMenuOffsetX() * ratioTo360p, 0);
+		ctx.setTransform(ratioTo360p * hudScale, 0, 0, ratioTo360p * hudScale, getMenuOffsetX() * ratioTo360p, 0);
 		
 		// Draw the screencap (covers the whole screen; the captures share the
 		// screen's aspect ratio, so this doesn't distort in widescreen)
 		if (this.timer < 60 || this.closing)
 		{
 			if (this.topLevelMenu)
-				ctx.drawImage(this.backgroundImage, -getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
+				ctx.drawImage(this.backgroundImage, -designOffsetX, 0, designWidth, designHeight);
 			else
-				ctx.drawImage(this.internalCanvas,  -getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
+				ctx.drawImage(this.internalCanvas,  -designOffsetX, 0, designWidth, designHeight);
 		}
-		
+
 		var alpha = 1;
 		if (this.closing)
 			alpha = normalizeValue(this.timer,this.endCloseTime,this.startCloseTime);
 		else
 			alpha = normalizeValue(this.timer,0,60);
-		
+
 		ctx.globalAlpha = alpha;
-		
+
 		// Draw the blurred buffer
-		ctx.drawImage(this.blurredBackgroundImage, -getMenuOffsetX(), 0, getMenuScreenWidth(), 360);
-    	
+		ctx.drawImage(this.blurredBackgroundImage, -designOffsetX, 0, designWidth, designHeight);
+
     	sstext.textBaseline = 'middle';
-		
-		var xPosition = 320;
+
+		var xPosition = Math.round(designWidth / 2 - designOffsetX);
 		var yPosition = 0;
 		
 		ctx.save();
@@ -156,10 +165,12 @@ SettingsMenu.prototype.Draw = function()
 				// Update the scroll target
 				if (i === this.selectedItem)
 				{
+					// Bottom of the visible list area (166 at full scale, i.e. 360-194)
+					var scrollBottom = Math.round(designHeight - 194);
 					// If the selected item is above the top of the screen, make it the top item
-					if (yPosition + this.scroll > 166)
+					if (yPosition + this.scroll > scrollBottom)
 					{
-						this.scrollTarget = 166-yPosition;
+						this.scrollTarget = scrollBottom-yPosition;
 					}
 					// If the selected item is below the bottom of the screen, make it the bottom item
 					if (yPosition + this.scroll < 0)
@@ -304,28 +315,30 @@ SettingsMenu.prototype.Draw = function()
     	
     	// Draw some background stripes to make sure the title is always visible
     	
-    	// Draw the screencap
+    	// Draw the screencap (the stripe covers the top 100 design units, which is
+    	// 100*hudScale screen units — the source slice must match that screen region)
     	ctx.globalAlpha = 1.0;
 		if (this.timer < 60 || this.closing)
 		{
 			if (this.topLevelMenu)
-				ctx.drawImage(this.backgroundImage, 0, 0, this.backgroundImage.width, this.backgroundImage.height / 360 * 100, -getMenuOffsetX(), 0, getMenuScreenWidth(), 100);
+				ctx.drawImage(this.backgroundImage, 0, 0, this.backgroundImage.width, this.backgroundImage.height / 360 * 100 * hudScale, -designOffsetX, 0, designWidth, 100);
 			else
-				ctx.drawImage(this.internalCanvas, 0, 0, this.internalCanvas.width, this.internalCanvas.height / 360 * 100, -getMenuOffsetX(), 0, getMenuScreenWidth(), 100);
+				ctx.drawImage(this.internalCanvas, 0, 0, this.internalCanvas.width, this.internalCanvas.height / 360 * 100 * hudScale, -designOffsetX, 0, designWidth, 100);
 		}
 
 		ctx.globalAlpha = alpha;
-		ctx.drawImage(this.blurredBackgroundImage, 0, 0, this.blurredBackgroundImage.width, this.blurredBackgroundImage.height / 360 * 100, -getMenuOffsetX(), 0, getMenuScreenWidth(), 100);
-    	
+		ctx.drawImage(this.blurredBackgroundImage, 0, 0, this.blurredBackgroundImage.width, this.blurredBackgroundImage.height / 360 * 100 * hudScale, -designOffsetX, 0, designWidth, 100);
+
     	// Now draw the title
     	sstext.alpha = alpha;
     	sstext.textAlign = "center";
 		sstext.fontSize = 46;
 		sstext.fillStyle = "#FFFFFF";
-		sstext.DrawTextWithShadow(this.title, 320, 67);
-		
+		sstext.DrawTextWithShadow(this.title, xPosition, 67);
+
 		ctx.globalAlpha=1.0;
-    	
+		sstext.scale = 1.0;
+
     	ctx.restore();
 };
 
