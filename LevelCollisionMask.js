@@ -91,6 +91,30 @@ LevelCollisionMask.prototype.Draw = function()
 	}
 };
 
+// Like Collide, but for an axis-aligned ellipse. Used by the camera in widescreen:
+// the camera masks were tuned for a circle against a 16:9 view, so a wider view
+// needs a wider horizontal reach or the camera shows past the level's edges.
+// Squash X so the ellipse becomes a circle, eject, and unsquash the result.
+LevelCollisionMask.prototype.CollideEllipse = function(posX,posY,radiusX,radiusY)
+{
+	var k = radiusY / radiusX;
+	var newPosition = {x:posX*k, y:posY};
+
+	for (var i = 0; i < this.lines.length; i++)
+	{
+		if (!this.lines[i].playerOnly)
+		{
+			var line = this.lines[i];
+			var squashed = new LineSegment(line.x1*k, line.y1, line.x2*k, line.y2);
+			var tmp = squashed.EjectCircle(newPosition.x, newPosition.y, radiusY);
+			newPosition.x += tmp.x;
+			newPosition.y += tmp.y;
+		}
+	}
+
+	return { x:(newPosition.x/k)-posX, y:newPosition.y-posY };
+};
+
 // This function accepts a circle and returns a position adjustment to resolve any level collisions
 LevelCollisionMask.prototype.Collide = function(posX,posY,radius,entity)
 {
