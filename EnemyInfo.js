@@ -40,7 +40,7 @@ if (this.enabled)
 		// design space whose right edge is designWidth (grows as the HUD shrinks).
 		var hudScale = getHudScale();
 		var effScale = ratioTo1080p * hudScale;
-		var designWidth = getVirtualScreenWidth() / hudScale;
+		var designWidth = getHudDesignWidth();
 
 		// Arrange drawing so that we are in a frame that is 1920x1080 with the origin
 		// on the upper right

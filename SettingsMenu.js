@@ -117,6 +117,7 @@ SettingsMenu.prototype.Draw = function()
 		// Scale menu content with the HUD size setting. Layout happens in a design
 		// space that grows as the scale shrinks (like HUD.js), so smaller settings
 		// also fit more items per screen. Backgrounds still fill the whole screen.
+		// drawAll resets sstext.scale to 1.0 each frame, so no reset is needed here.
 		var hudScale = getHudScale();
 		var designHeight = 360 / hudScale;
 		var designWidth = getMenuScreenWidth() / hudScale;
@@ -337,7 +338,6 @@ SettingsMenu.prototype.Draw = function()
 		sstext.DrawTextWithShadow(this.title, xPosition, 67);
 
 		ctx.globalAlpha=1.0;
-		sstext.scale = 1.0;
 
     	ctx.restore();
 };

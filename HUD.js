@@ -151,7 +151,7 @@ if (this.enabled)
 		// as one unit. The HUD lays itself out in this scaled "design space"; the right
 		// edge of that space is designWidth (which grows as the HUD shrinks).
 		var effScale = ratioTo1080p * hudScale;
-		var designWidth = getVirtualScreenWidth() / hudScale;
+		var designWidth = getHudDesignWidth();
 		ctx.setTransform(effScale, 0, 0, effScale, 0, 0);
 
 		// Layout the bars
@@ -395,7 +395,7 @@ HUD.prototype.CollectOrb = function(orb)
 	// "design space" (see Draw), so map into that same space: divide the virtual
 	// coordinates by the HUD scale and anchor right-side targets to designWidth.
 	var hudScale = getHudScale();
-	var designWidth = getVirtualScreenWidth() / hudScale;
+	var designWidth = getHudDesignWidth();
 	var newPos = camera.matrix.mapPointFromLocalToWorld({x:orb.posX,y:orb.posY});
 	orb.posX = linearRemap(newPos.x, 0, c.width, 0, designWidth);
 	orb.posY = linearRemap(newPos.y, 0, c.height, 0, 1080 / hudScale);

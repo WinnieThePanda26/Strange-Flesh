@@ -277,7 +277,8 @@ MainMenu.prototype.Draw = function()
 
 		// Scale the option list with the HUD size setting. sstext.scale multiplies
 		// design coordinates, so dividing the anchors by the scale keeps the list
-		// at the same screen position while the text shrinks.
+		// at the same screen position while the text shrinks. drawAll resets
+		// sstext.scale to 1.0 at the top of each frame, so no reset is needed here.
 		var hudScale = getHudScale();
 		sstext.scale = hudScale;
 		var xPosition = linearRemap(menuAnim,0,1,830,600) / hudScale;
@@ -317,7 +318,6 @@ MainMenu.prototype.Draw = function()
 				yPosition += 40;
 			}
     	}
-		sstext.scale = 1.0;
 	}
 	else if (this.pulsedOnce)
 	{

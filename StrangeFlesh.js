@@ -935,6 +935,15 @@ function getHudScale()
 	}
 };
 
+// Width of the HUD's scaled "design space" in virtual (1080-high) units. The HUD
+// draws with getHudScale() baked into the ctx transform, so a smaller HUD lays
+// itself out in a correspondingly wider space; right-edge elements anchor to this.
+// Shared by HUD.js and EnemyInfo.js so the formula lives in one place.
+function getHudDesignWidth()
+{
+	return getVirtualScreenWidth() / getHudScale();
+};
+
 function resizeCanvas(force)
 {
 	if (force || window.innerWidth !==  storedWidth || window.innerHeight !== storedHeight)
@@ -1067,9 +1076,11 @@ function drawAll()
 	
 	resizeCanvas(false);
 
-	// Default: no text offset (gameplay HUD draws at native positions).
-	// The menu branch below sets this to center menu text in widescreen.
+	// Default text state, reset once per frame so a consumer that sets these
+	// (menus scale text with the HUD size; the menu branch offsets it in
+	// widescreen) can never leak into the next frame's gameplay text.
 	sstext.offsetX = 0;
+	sstext.scale = 1.0;
 
 	if (GlobalResourceLoader.AllReady())
 	{
