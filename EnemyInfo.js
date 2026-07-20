@@ -35,18 +35,24 @@ if (this.enabled)
 		ctx.save();
 	
 		var ratioTo1080p =  c.height / 1080.0;
-		
+
+		// Scale the whole bar with the HUD size setting, like HUD.js: draw in a
+		// design space whose right edge is designWidth (grows as the HUD shrinks).
+		var hudScale = getHudScale();
+		var effScale = ratioTo1080p * hudScale;
+		var designWidth = getVirtualScreenWidth() / hudScale;
+
 		// Arrange drawing so that we are in a frame that is 1920x1080 with the origin
 		// on the upper right
-		ctx.setTransform(ratioTo1080p, 0, 0, ratioTo1080p, 0, 0);
-		
+		ctx.setTransform(effScale, 0, 0, effScale, 0, 0);
+
     	// Draw the background of the EnemyInfo
     	if (this.enemy !== null && this.framesSinceDeath < 20 && this.framesSinceUpdate < this.cooldown)
     	{
-		var rightEdge = getVirtualScreenWidth() - 120;
+		var rightEdge = designWidth - 120;
     		var topEdge = 150;
     		var margin = 10;
-    		sstext.fontSize = this.fontSize/3;
+    		sstext.fontSize = this.fontSize * hudScale / 3;
     		sstext.textAlign = "center";
     		sstext.textBaseline = "alphabetic";
     		sstext.fillStyle = "#FFF";
@@ -94,7 +100,7 @@ if (this.enabled)
     		ctx.fillRect(rightEdge-width-margin, topEdge - margin, (width+margin+margin) * normalizeValue(this.health % 205,0,205) ,height+margin);
     		
     		sstext.alpha =  1.0 * alpha;
-			sstext.DrawText(this.enemy.displayName,Math.floor((rightEdge - width / 2)/3),Math.floor((topEdge+height-15)/3));
+			sstext.DrawText(this.enemy.displayName,Math.floor((rightEdge - width / 2) * hudScale / 3),Math.floor((topEdge+height-15) * hudScale / 3));
 
 			ctx.globalAlpha = 1.0;
 		}
