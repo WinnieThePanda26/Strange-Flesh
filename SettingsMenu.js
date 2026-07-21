@@ -796,7 +796,7 @@ function ShowSettingsMenu(ingame)
 							resizeCanvas(true);
 						}
 					},
-					{ "element":"multi", "label":"HUD Size", "options":["Small","Normal","Large"], "selected":settings.hudSize, "onChange":function()
+					{ "element":"multi", "label":"UI Size", "options":["Small","Normal","Large"], "selected":settings.hudSize, "onChange":function()
 						{
 							settings.hudSize = this.selected;
 						}
