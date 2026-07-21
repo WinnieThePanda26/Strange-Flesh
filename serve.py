@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""No-cache static server for playtesting Strange Flesh.
+"""No-cache static server for running Strange Flesh from source.
 
-Serves a directory (default: current dir) over HTTP with caching disabled, so
-code edits show up on a plain reload. Usage:
+The game must be served over HTTP (opening index.html from disk fails: browsers
+block its level/asset requests on file://). Caching is disabled so code edits
+show up on a plain reload. Usage:
 
-    python3 .claude/skills/playtest/serve.py [--root DIR] [--port 8000]
+    python3 serve.py [--root DIR] [--port 8000]
+
+Then open http://localhost:8000/index.html (or /editor.html for the editor).
 """
 import argparse
 import os

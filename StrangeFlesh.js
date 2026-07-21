@@ -459,6 +459,7 @@ function loadSettings()
 						"scalingQuality": 0,
 						"enableRetina" : false,
 						"widescreenMode" : 0,
+						"hudSize" : 1,
 						"musicLevelGameplay" : 0.5,
 						"baseSFXBoost" : 1.0,
 						"fullscreenMode" : true,
@@ -912,6 +913,37 @@ function getMenuOffsetX()
 	return Math.round((360.0 * (c.width / c.height) - 640) / 2.0);
 };
 
+// Full screen width in the 360-high menu coordinate space (640 at 16:9, up to 840
+// in widescreen). From inside the offset menu frame, the whole screen spans
+// x = -getMenuOffsetX() .. -getMenuOffsetX() + getMenuScreenWidth().
+function getMenuScreenWidth()
+{
+	return Math.round(360.0 * (c.width / c.height));
+};
+
+// Overall scale multiplier for the HUD (health/sex/corruption/domination bars,
+// icons, lives). Multiplies the HUD's base 3x layout so the whole HUD shrinks or
+// grows as one unit. 1.0 == the original size; lower == smaller. Driven by the
+// "HUD Size" setting.
+function getHudScale()
+{
+	switch (settings.hudSize)
+	{
+		case 0:  return 0.6;   // Small
+		case 2:  return 1.0;   // Large (original size)
+		default: return 0.8;   // Normal
+	}
+};
+
+// Width of the HUD's scaled "design space" in virtual (1080-high) units. The HUD
+// draws with getHudScale() baked into the ctx transform, so a smaller HUD lays
+// itself out in a correspondingly wider space; right-edge elements anchor to this.
+// Shared by HUD.js and EnemyInfo.js so the formula lives in one place.
+function getHudDesignWidth()
+{
+	return getVirtualScreenWidth() / getHudScale();
+};
+
 function resizeCanvas(force)
 {
 	if (force || window.innerWidth !==  storedWidth || window.innerHeight !== storedHeight)
@@ -1044,9 +1076,11 @@ function drawAll()
 	
 	resizeCanvas(false);
 
-	// Default: no text offset (gameplay HUD draws at native positions).
-	// The menu branch below sets this to center menu text in widescreen.
+	// Default text state, reset once per frame so a consumer that sets these
+	// (menus scale text with the HUD size; the menu branch offsets it in
+	// widescreen) can never leak into the next frame's gameplay text.
 	sstext.offsetX = 0;
+	sstext.scale = 1.0;
 
 	if (GlobalResourceLoader.AllReady())
 	{
@@ -1209,13 +1243,18 @@ function blitInternalBuffer()
 {
 	// Now actually draw the contents of ctx to displayCtx
 	displayCtx.drawImage(c, 0, 0, displayC.width, displayC.height);
-	
+
 	// Clear the internal render canvas
 	ctx.save();
 	ctx.setTransform(1, 0, 0, 1, 0, 0);
 	ctx.clearRect(0, 0, c.width, c.height);
 	ctx.restore();
-	
+
+	// The HUD renders directly on the display canvas at full resolution (see
+	// HUD.Draw), on top of the blitted frame but under the supersampled text
+	if (typeof(hud) !== 'undefined' && hud !== null && hud.displayDrawPending)
+		hud.DrawToDisplay();
+
 	sstext.BlitAndClear();
 };
 

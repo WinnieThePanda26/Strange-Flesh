@@ -93,9 +93,10 @@ function HUD(owner)
 	//this.ctx.mozImageSmoothingEnabled = false;
 	
 	this.orbs = [];
-	
+
 	// State
 	this.enabled = true;
+	this.displayDrawPending = false;
 };
 
 HUD.prototype.Reset = function()
@@ -116,34 +117,54 @@ HUD.prototype.Reset = function()
 	
 	this.hudAlpha = 0;
 	this.hudHidden = false;
+	this.displayDrawPending = false;
 }
 
+// The overlays pass draws onto the small internal canvas, where a shrunken HUD
+// (hudSize setting) would nearest-neighbor downscale its pixel art. Instead just
+// flag the draw here; blitInternalBuffer calls DrawToDisplay after the frame is
+// copied to the display canvas, so the HUD renders at full display resolution
+// (and its "screen" blends still composite against the gameplay pixels).
 HUD.prototype.Draw = function()
 {
+	this.displayDrawPending = this.enabled;
+};
+
+HUD.prototype.DrawToDisplay = function()
+{
+	this.displayDrawPending = false;
 if (this.enabled)
 {
+		// Swap the global context so all sprite helpers target the display canvas
+		var prevCtx = ctx;
+		ctx = displayCtx;
+
 		// Basically draw over everything
 		// Store the current transformation matrix
 		ctx.save();
-	
-		var ratioTo1080p =  c.height / 1080.0;
-		var virtualScreenWidth = getVirtualScreenWidth();
-		
+
+		var ratioTo1080p =  displayC.height / 1080.0;
+		var hudScale = getHudScale();
+
 		// Arrange drawing so that we are in a frame that is 1920x1080 with the origin
-		// on the upper right
-		ctx.setTransform(ratioTo1080p, 0, 0, ratioTo1080p, 0, 0);
-		
+		// on the upper left, then bake in the HUD scale so the whole HUD shrinks/grows
+		// as one unit. The HUD lays itself out in this scaled "design space"; the right
+		// edge of that space is designWidth (which grows as the HUD shrinks).
+		var effScale = ratioTo1080p * hudScale;
+		var designWidth = getHudDesignWidth();
+		ctx.setTransform(effScale, 0, 0, effScale, 0, 0);
+
 		// Layout the bars
 		var healthBarPosX = 8;
 		var healthBarPosY = 8;
-	
+
 		var sexBarPosX = 41;
 		var sexBarPosY = 62;
-	
-		var corruptionBarPosX = virtualScreenWidth - this.corruptionBarImage.width * pxScale - 8;
+
+		var corruptionBarPosX = designWidth - this.corruptionBarImage.width * pxScale - 8;
 		var corruptionBarPosY = 8;
-	
-		var dominationBarPosX = virtualScreenWidth - this.dominationBarImage.width * pxScale - 8;
+
+		var dominationBarPosX = designWidth - this.dominationBarImage.width * pxScale - 8;
 		var dominationBarPosY = 62;
 		
 		ctx.globalAlpha = this.hudAlpha;
@@ -260,7 +281,7 @@ if (this.enabled)
 		// Draw reflections
 		ctx.globalCompositeOperation = "screen";
 		this.healthBarReflectionImage.DrawSprite3x(healthBarPosX + 6, healthBarPosY + 6);
-		this.corruptionBarReflectionImage.DrawSprite3x(ctx ,corruptionBarPosX + 6,corruptionBarPosY + 3);
+		this.corruptionBarReflectionImage.DrawSprite3x(corruptionBarPosX + 6,corruptionBarPosY + 3);
 		this.dominationBarReflectionImage.DrawSprite3x(dominationBarPosX + 6,dominationBarPosY + 3);
 		ctx.globalCompositeOperation = "source-over";
 	
@@ -341,8 +362,11 @@ if (this.enabled)
     	}
     	
     	 ctx.globalAlpha = 1.0;
-		
+
     	ctx.restore();
+
+		// Put the global context back on the internal render canvas
+		ctx = prevCtx;
 	}
 };
 
@@ -367,28 +391,32 @@ HUD.prototype.CollectOrb = function(orb)
 	orb.posZ = 0;
 	orb.velZ = 0;
 	
-	// Translate the orb's position to HUD coordinates
+	// Translate the orb's position to HUD coordinates. The HUD renders in a scaled
+	// "design space" (see Draw), so map into that same space: divide the virtual
+	// coordinates by the HUD scale and anchor right-side targets to designWidth.
+	var hudScale = getHudScale();
+	var designWidth = getHudDesignWidth();
 	var newPos = camera.matrix.mapPointFromLocalToWorld({x:orb.posX,y:orb.posY});
-	orb.posX = linearRemap(newPos.x, 0, c.width, 0, getVirtualScreenWidth());
-	orb.posY = linearRemap(newPos.y, 0, c.height, 0, 1080);
-	
+	orb.posX = linearRemap(newPos.x, 0, c.width, 0, designWidth);
+	orb.posY = linearRemap(newPos.y, 0, c.height, 0, 1080 / hudScale);
+
 	// Set the orb's destination
 	if (orb.kind === ORB_HEALTH)
 	{
 		var healthWidth = Math.round(this.playerHealthFraction * this.healthBarFilledImage.width);
 		orb.destX = 32 + healthWidth * pxScale;
-		orb.destY = 32;    	
+		orb.destY = 32;
 	}
 	else if (orb.kind === ORB_DOMINATE)
 	{
 		var dominationWidth = Math.round(this.dominationFraction * this.dominationBarFilledImage.width);
-		orb.destX = 1908 - dominationWidth * pxScale;
+		orb.destX = designWidth - 12 - dominationWidth * pxScale;
 		orb.destY = 87;
 	}
 	else if (orb.kind === ORB_CORRUPT)
 	{
 		var corruptionWidth = Math.round(this.corruptionFraction * this.corruptionBarFilledImage.width);
-		orb.destX = 1908 - corruptionWidth * pxScale;
+		orb.destX = designWidth - 12 - corruptionWidth * pxScale;
 		orb.destY = 32;
 	}
 	else if (orb.kind === ORB_LIFE)

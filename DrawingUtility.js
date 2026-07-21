@@ -23,11 +23,13 @@ function cloneCanvas(canvas)
 
 function cloneCanvas1080p(canvas)
 {
+	// Clone at 360p height, preserving the source aspect ratio (640 wide at 16:9,
+	// wider in widescreen) so widescreen captures don't get squeezed.
 	var cloneCanvas = document.createElement("canvas");
-	cloneCanvas.width = 640;
 	cloneCanvas.height = 360;
+	cloneCanvas.width = Math.round(canvas.width / canvas.height * 360);
 	var localctx = cloneCanvas.getContext("2d");
-	localctx.drawImage(canvas, 0, 0, 640, 360);
+	localctx.drawImage(canvas, 0, 0, cloneCanvas.width, 360);
 	return cloneCanvas;
 };
 

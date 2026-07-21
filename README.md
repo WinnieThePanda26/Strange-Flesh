@@ -18,11 +18,35 @@ Programmer for Greatest Bear Studios
 
 ---
 
+## Running the game from source
+
+The game has no build step, but it **must be served over HTTP** — double-clicking
+`index.html` does not work, because browsers block the game's level and asset
+requests when loaded from `file://`.
+
+1. Download the media pack (link above, 18+ only) and unzip it into the repo root
+   so that the `images/` and `sound/` directories sit next to `index.html`.
+2. Start the bundled dev server (Python 3, no dependencies):
+
+   ```bash
+   python3 serve.py
+   ```
+
+   Any static file server works, but `serve.py` disables caching so code edits
+   show up on a plain reload.
+3. Open <http://localhost:8000/index.html> and click once if the loading screen
+   waits for input (the click unlocks browser audio).
+
+The level editor runs the same way: <http://localhost:8000/editor.html>.
+
+---
+
 ## How the codebase works
 
 Strange Flesh is a 2D side-scrolling beat-'em-up that runs entirely in an HTML5 canvas and is
 packaged for desktop with Electron. It is plain ES5 JavaScript served as static files — **no
-build step, no bundler, no package manager, no framework.** Just open `index.html`.
+build step, no bundler, no package manager, no framework.** Serve the repo and open
+`index.html` (see "Running the game from source" above).
 
 ### Entry points
 - **`index.html`** loads only `StrangeFlesh.js`, which pulls in every other source file through

@@ -50,7 +50,7 @@ TitleCardMenu.prototype.Draw = function()
 		ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, getMenuOffsetX() * ratioTo360p, 0);
 		ctx.globalAlpha = 1.0;
 		ctx.fillStyle = "#000000";
-		ctx.fillRect(0,0,640,360);
+		ctx.fillRect(-getMenuOffsetX(),0,getMenuScreenWidth(),360);
     	ctx.globalAlpha = this.alpha;
     	this.card.Draw( 0, 0, 640, 360);
 		ctx.globalAlpha = 1.0;

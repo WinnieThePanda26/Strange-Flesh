@@ -250,8 +250,13 @@ CanvasCamera.prototype.updatePosition = function()
 				//this.posX += dx;
 				//this.posY += dy;
 	
-				// Eject the camera from the camera guides
-				var ejectionVector = level.cameraMask.Collide(this.posXFloat + dx, this.posYFloat + dy, this.boundingRect.height() / 2.0)
+				// Eject the camera from the camera guides. The masks were tuned for a
+				// circle spanning the view height with a 16:9 view; widen the reach by
+				// exactly the extra view width so widescreen can't see past the level's
+				// authored edges (at 16:9 radiusX === radiusY, identical to before).
+				var radiusY = this.boundingRect.height() / 2.0;
+				var radiusX = radiusY + (this.boundingRect.width() - this.boundingRect.height() * (16.0/9.0)) / 2.0;
+				var ejectionVector = level.cameraMask.CollideEllipse(this.posXFloat + dx, this.posYFloat + dy, radiusX, radiusY)
 				
 				var ex = dx + ejectionVector.x;
 				var ey = dy + ejectionVector.y;

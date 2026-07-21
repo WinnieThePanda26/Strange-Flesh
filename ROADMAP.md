@@ -17,8 +17,9 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[?]` needs a decision
 - [x] Center menus & cutscenes in widescreen (menu offset + `sstext.offsetX`)
 - [ ] **Verify in browser** — confirm menus center and HUD anchors correctly at
       ultrawide; the menu-centering fix is committed but not yet visually confirmed
-- [ ] Sanity-check gameplay edges in widescreen (enemy spawn timing, camera limits,
-      light/overlay fills using `getVirtualScreenWidth()`)
+- [~] Sanity-check gameplay edges in widescreen (enemy spawn timing, camera limits,
+      light/overlay fills using `getVirtualScreenWidth()`) — camera now clamps as an
+      ellipse so widescreen can't see past a level's authored edges (`CollideEllipse`)
 
 _Branch: `widescreen-aspect-ratio`_
 
@@ -29,12 +30,19 @@ _Branch: `widescreen-aspect-ratio`_
 ### Shrink the HUD / oversized UI
 The health, sex, corruption, and domination bars are drawn at a hardcoded **3×**
 (`pxScale = 3.0` + `DrawSprite3x` in `HUD.js`). They dominate the screen at 1080p.
-- [ ] Introduce a dedicated HUD scale (e.g. `hudScale`) instead of the global 3×,
-      and parameterize the bar draws (replace `DrawSprite3x` with a scaled draw)
-- [ ] Re-anchor bars after scaling (health/sex top-left, corruption/domination
-      top-right via `getVirtualScreenWidth()`)
-- [ ] [?] Decide: fixed smaller scale, or a "HUD size" setting (Small/Normal/Large)
-- [ ] Check EnemyInfo (boss/enemy nameplate) sizing for the same issue
+- [x] Introduce a dedicated HUD scale (`getHudScale()`) that multiplies the HUD's
+      base 3× layout via the ctx transform — the whole HUD scales as one unit,
+      leaving the global `pxScale` (game world) untouched
+- [x] Re-anchor bars after scaling using a scaled `designWidth` so corruption/
+      domination stay pinned to the right edge in both 16:9 and widescreen
+- [x] Expose a "HUD Size" setting (Small 0.6 / Normal 0.8 / Large 1.0); default
+      Normal is 20% smaller than the old size, Large restores the original
+- [x] Check EnemyInfo (boss/enemy nameplate) sizing for the same issue — now scales
+      with `getHudScale()`; it's drawn with fillRect + supersampled text (no sprite
+      pixel art), so it never had the nearest-neighbor downscaling problem
+- [x] Render the HUD on the display canvas at full resolution so a shrunk HUD no
+      longer nearest-neighbor downscales its pixel art (`HUD.DrawToDisplay`)
+- [x] Scale menu text (main menu + settings/pause menus) with the HUD Size setting
 
 ### Difficulty settings (net-new — none exist today)
 - [ ] [?] Define what difficulty changes: enemy damage taken/dealt, player health,

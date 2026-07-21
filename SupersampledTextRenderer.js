@@ -30,6 +30,11 @@ function SupersampledTextRenderer()
 	// Horizontal offset (in render-canvas pixels) added to all text. Used to center
 	// menus in widescreen, since this renderer is not affected by the ctx transform.
 	this.offsetX = 0;
+
+	// Scale applied to coordinates and font size (but not offsetX). Menus set this
+	// to getHudScale() so their text shrinks with the HUD size setting; MeasureText
+	// stays in unscaled design units.
+	this.scale = 1.0;
 	
 	this.isClear = true;
 };
@@ -74,10 +79,10 @@ SupersampledTextRenderer.prototype.DrawText = function(text, x, y, fontSize, fil
 	
 	this.context.globalAlpha = this.alpha;
 	this.context.textAlign = this.textAlign;
-	this.context.font = (this.fontSize*3) + "px " + this.font;
+	this.context.font = (this.fontSize*3*this.scale) + "px " + this.font;
 	this.context.fillStyle = this.fillStyle;
 	this.context.textBaseline = this.textBaseline;
-	this.context.fillText(text,(x+this.offsetX)*3,y*3);
+	this.context.fillText(text,(x*this.scale+this.offsetX)*3,y*this.scale*3);
 };
 
 SupersampledTextRenderer.prototype.DrawTextWithShadow = function(text, x, y, color)

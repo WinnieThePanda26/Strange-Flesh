@@ -666,7 +666,3 @@ GamepadButtonMonitor.prototype.Update = function()
 };
 
 var gamepadSupportAvailable = !!navigator.getGamepads;
-
-
-window.addEventListener("gamepadconnected", gamepadConnected);
-window.addEventListener("gamepaddisconnected", gamepadDisconnected);

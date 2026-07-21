@@ -95,13 +95,16 @@ LevelStartTransition.prototype.Draw = function()
 	var ratioTo1080p =  c.height / 1080.0;
 
 	// Arrange drawing so that we are in a frame that is 1920x1080 with the origin
-	// on the upper right
+	// on the upper right. The composition is designed around the center of a 1920
+	// screen; centerX shifts it to the true screen center in widescreen.
+	var virtualScreenWidth = getVirtualScreenWidth();
+	var centerOffsetX = Math.round((virtualScreenWidth - 1920) / 2.0);
 	ctx.setTransform(ratioTo1080p, 0, 0, ratioTo1080p, 0, 0);
-	
+
 	// Draw the background frame
 	ctx.fillStyle = this.bgColor;
-	ctx.fillRect(0, 0, getVirtualScreenWidth(), 1080);
-	
+	ctx.fillRect(0, 0, virtualScreenWidth, 1080);
+
 	var time = normalizeValue(this.timer,0,this.length);
 	time = (Math.pow(time+1,3)-1)/7;
 	var position = linearRemap(time,0,1,this.startDist,this.endDist);
@@ -110,9 +113,9 @@ LevelStartTransition.prototype.Draw = function()
 	this.bartenderflying.SetDurationInSeconds(linearRemap(position,this.startDist,this.endDist,0.8,0.2));
 	
 	var scale = this.focalLength / position;
-	
+
 	ctx.save();
-	ctx.translate(960,540);
+	ctx.translate(960 + centerOffsetX,540);
 	ctx.scale( scale, scale );
     	
 	// Draw Joe (80,35) is center of zoom
@@ -155,7 +158,7 @@ LevelStartTransition.prototype.Draw = function()
 			var nearAlphaContinuous = linearRemap(scale, 0.2, 0.8, 0, 1);
 			
 			// Setup the canvas for drawing the ring
-			ctx.translate(960,540);
+			ctx.translate(960 + centerOffsetX,540);
 			ctx.scale( scale, scale );
 			ctx.rotate(this.rings[i].rotation);
 
@@ -206,10 +209,10 @@ LevelStartTransition.prototype.Draw = function()
 	
 	// Now absent any scaling, draw the bartender
 	frame = this.bartenderflying.GetFrame();
-			
-	frame.Draw(	
-					960 - frame.width/2 * pxScale, 
-					1080 -frame.height * pxScale, 
+
+	frame.Draw(
+					960 + centerOffsetX - frame.width/2 * pxScale,
+					1080 -frame.height * pxScale,
 					frame.width * pxScale,
 					frame.height * pxScale );
 	
@@ -220,14 +223,17 @@ LevelStartTransition.prototype.Draw = function()
 	
 		var scale = 20 / (linearToSquareRemap(this.timer,0,this.transitionInTime,20,0.1));
 
-		ctx.translate(224*pxScale,221*pxScale);
+		// The zoom focal point (Joe's eye) sits at 224,221 within the 1920-wide
+		// cutscene content; the capture and this screen are both centered, so
+		// shift the focal point by the same centering offset.
+		ctx.translate(224*pxScale + centerOffsetX,221*pxScale);
 		ctx.scale( scale, scale );
-	
+
 		ctx.globalAlpha = 1-normalizeValue(this.timer, this.transitionInTime-60, this.transitionInTime);
 
-		ctx.drawImage(	cutsceneToLevelTransition , 
-					-224*pxScale, 
-					-221*pxScale, 
+		ctx.drawImage(	cutsceneToLevelTransition ,
+					-(224*pxScale + centerOffsetX),
+					-221*pxScale,
 					cutsceneToLevelTransition.width * pxScale,
 					cutsceneToLevelTransition.height * pxScale );
 		ctx.globalAlpha = 1.0;

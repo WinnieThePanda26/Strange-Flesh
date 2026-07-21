@@ -691,7 +691,10 @@ function ResourceLoader()
 					canvas.removeEventListener('click', webAudioUnlocker);
 					canvas.removeEventListener('touchend', webAudioUnlocker);
 					GlobalResourceLoader.webAudioLocked = false;
-					enableTouchInput();
+					// Only the game entry point (StrangeFlesh.js) defines this;
+					// the editor shares this file but has no touch input.
+					if (typeof enableTouchInput === 'function')
+						enableTouchInput();
 				};
 
 			// play the file

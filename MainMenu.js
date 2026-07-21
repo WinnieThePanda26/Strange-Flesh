@@ -196,9 +196,9 @@ MainMenu.prototype.Draw = function()
 	ctx.setTransform(ratioTo360p, 0, 0, ratioTo360p, getMenuOffsetX() * ratioTo360p, 0);
 	ctx.globalAlpha = 1.0;
 
-	// Draw the background
+	// Draw the background (cover the whole screen, including widescreen side areas)
 	ctx.fillStyle = "#000011";
-	ctx.fillRect(0,0,640,360);
+	ctx.fillRect(-getMenuOffsetX(),0,getMenuScreenWidth(),360);
 	
 	
 	var menuAnim = linearToSigmoidRemap(this.menuTimer,0,60);
@@ -274,9 +274,16 @@ MainMenu.prototype.Draw = function()
 	if (this.menuMode)
 	{
 		var alpha = normalizeValue(this.menuTimer,0,60);
-		var xPosition = linearRemap(menuAnim,0,1,830,600);
-		var yPosition = Math.round((360 - ((this.items.length-1) * 40)) / 2.0);
-		
+
+		// Scale the option list with the HUD size setting. sstext.scale multiplies
+		// design coordinates, so dividing the anchors by the scale keeps the list
+		// at the same screen position while the text shrinks. drawAll resets
+		// sstext.scale to 1.0 at the top of each frame, so no reset is needed here.
+		var hudScale = getHudScale();
+		sstext.scale = hudScale;
+		var xPosition = linearRemap(menuAnim,0,1,830,600) / hudScale;
+		var yPosition = Math.round((360 / hudScale - ((this.items.length-1) * 40)) / 2.0);
+
 		for (var i=0; i < this.items.length; i++)
 		{ 		
 			if (this.items[i].element === "spacer")
@@ -307,7 +314,7 @@ MainMenu.prototype.Draw = function()
 				}
 								//(text, x, y, fontSize, fillStyle, alpha, textAlign, textBaseline)
 				sstext.DrawText(this.items[i].label, xPosition, yPosition, 26,  "#FFFFFF", txtAlpha, "right");
-				
+
 				yPosition += 40;
 			}
     	}
@@ -323,7 +330,7 @@ MainMenu.prototype.Draw = function()
 	// Fade out
 	ctx.globalAlpha = 1-normalizeValue(this.timer, 0, 60);
 	ctx.fillStyle = "#000000";
-	ctx.fillRect(0,0,640,360);
+	ctx.fillRect(-getMenuOffsetX(),0,getMenuScreenWidth(),360);
 	ctx.globalAlpha = 1.0;
 	ctx.restore();
 };
