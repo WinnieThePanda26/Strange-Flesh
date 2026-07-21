@@ -557,7 +557,7 @@ function ShowPauseMenu()
 					}
 				];
 				
-	if (enableDebug || devDebug || (settings.gameBeatenDomination && settings.gameBeatenCorruption && settings.gameBeatenWithoutSaves))
+	if (IsDebugUnlocked())
 	{
 		var debugMenu = { "element":"button", "label":"Debug", "onClick":function()
 							{ 
@@ -821,22 +821,31 @@ function ShowSettingsMenu(ingame)
 						}
 					},
 					*/
+					{ "element":"multi", "label":"Debug Mode", "options":["Disabled","Enabled"], "selected":settings.debugMode?1:0, "onChange":function()
+						{
+							// The settings toggle is the master switch for debug mode:
+							// it persists and drives the runtime debug state directly.
+							settings.debugMode = (this.selected === 1);
+							debug = settings.debugMode ? 2 : 0;
+						}
+					},
 					{ "element":"button", "label":"Erase Data...", "enabled":!ingame, "onClick":function()
 						{
 							if (!ingame)
 								ShowEraseDataMenu();
-						} 
+						}
 					},
 					{ "element":"spacer", "size":16},
-					
+
 					{ "element":"button", "label":"Back", "onClick":function()
-						{ 
+						{
 							menu.startCloseTime = menu.timer;
 							menu.endCloseTime = menu.timer + 60;
 							menu.closing = true;
-						} 
-					}   
+						}
+					}
 				];
+
 	menu.Show();
 };
 
@@ -878,10 +887,11 @@ function ShowDevelopmentMenu()
  							DismissAllMenus();
  						}
  					},
-					{ "element":"multi", "label":"Debug Mode", "options":["Disabled","Enabled"], "selected":(debug>0)?1:0, "onChange":function()
+					{ "element":"multi", "label":"Debug Mode", "options":["Disabled","Enabled"], "selected":settings.debugMode?1:0, "onChange":function()
 						{
-							debug  = (this.selected === 1)?2:0;
-						} 
+							settings.debugMode = (this.selected === 1);
+							debug = settings.debugMode ? 2 : 0;
+						}
 					},
 					{ "element":"button", "label":"Debug Mode Keys...", "onClick":function()
 						{

@@ -460,6 +460,7 @@ function loadSettings()
 						"enableRetina" : false,
 						"widescreenMode" : 0,
 						"hudSize" : 1,
+						"debugMode" : false,
 						"musicLevelGameplay" : 0.5,
 						"baseSFXBoost" : 1.0,
 						"fullscreenMode" : true,
@@ -544,7 +545,18 @@ function loadSettings()
 		resizeCanvas(true);
 	}
 
+	// Apply the persistent Debug Mode setting to the runtime debug state
+	debug = settings.debugMode ? 2 : 0;
 };
+
+// True when debug features (the overlay, hotkeys, and the Debug/Development menus)
+// are available. The persistent Debug Mode setting takes precedence, but the dev
+// overrides and the "beat the game three ways" unlock still enable it too.
+function IsDebugUnlocked()
+{
+	return settings.debugMode || enableDebug || devDebug ||
+		(settings.gameBeatenDomination && settings.gameBeatenCorruption && settings.gameBeatenWithoutSaves);
+}
 
 function useContinue()
 {	
@@ -678,7 +690,7 @@ function keyDown(evt)
 {
 	controller.keyDown(evt);
 	
-	if (evt.keyCode === 66 && (enableDebug || devDebug || (settings.gameBeatenDomination && settings.gameBeatenCorruption && settings.gameBeatenWithoutSaves)))
+	if (evt.keyCode === 66 && IsDebugUnlocked())
 	{
 		debug = (debug + 1) % 3;
 	}

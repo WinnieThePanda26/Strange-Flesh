@@ -120,7 +120,7 @@ function MainMenu()
 					}
 				];
 	
-	if (enableDebug || devDebug || (settings.gameBeatenDomination && settings.gameBeatenCorruption && settings.gameBeatenWithoutSaves))
+	if (IsDebugUnlocked())
 	{
 		var debugMenu = { "element":"button", "label":"Debug", "onClick":function()
 							{ 
