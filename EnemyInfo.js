@@ -141,6 +141,11 @@ EnemyInfo.prototype.Clear = function()
 
 EnemyInfo.prototype.NotifyHit = function(enemyEntity)
 {
+	// Regular enemies now use the floating health bar above their head (see
+	// DrawEntityHealthBar in WalkingEntity.js); only bosses use this top-right bar.
+	if (enemyEntity.maxHealth <= HEALTHBAR_BOSS_THRESHOLD)
+		return;
+
 	if (enemyEntity !== player)
 	{
 		if (this.enemy !== null && this.enemy.state !== States.Dead && this.framesSinceUpdate < 60)

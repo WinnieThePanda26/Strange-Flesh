@@ -111,7 +111,8 @@ function EntityInit()
 	this.MustJumpToMove=false;
 	this.isPassThrough = false;
 	this.showDamageMeter = true;
-	
+	this.framesSinceDamaged = 100000;	// Frames since last hit; drives the floating health bar (large = hidden)
+
 	// Orbs released on death
 	this.orbsOnDeath = 0;
 	this.orbsAfterSex = 0;
@@ -417,9 +418,59 @@ function EntityDraw()
     		//DrawPacmanIndicator(1-normalizeValue(this.recruitedFrames, 0,this.recruitmentTime), -(this.zHeight + 130), "#b3169f");
     		DrawStatusIndicator(1-normalizeValue(this.recruitedFrames, 0,this.recruitmentTime), 0, -(this.zHeight + 130), this.recruitOutline, this.recruitFill)
     	}
-    	
+
+    	// Draw a small floating health bar above regular enemies for a few seconds after they're hit.
+    	// Bosses (maxHealth > HEALTHBAR_BOSS_THRESHOLD) keep the top-right EnemyInfo bar instead.
+    	if (this.alliance === 2 && this.showDamageMeter && this.maxHealth <= HEALTHBAR_BOSS_THRESHOLD &&
+    		this.state !== States.Dead && this.framesSinceDamaged < HEALTHBAR_COOLDOWN)
+    	{
+    		DrawEntityHealthBar(this);
+    	}
+
     	ctx.translate(-this.posX,-this.posY);
     	}
+};
+
+// Floating enemy health bar tuning (all in virtual/world units and frames @ 60fps)
+var HEALTHBAR_BOSS_THRESHOLD = 205;	// maxHealth above this uses the top-right EnemyInfo bar
+var HEALTHBAR_COOLDOWN = 240;		// frames the bar stays up after the last hit (~4s)
+var HEALTHBAR_FADEIN = 6;			// fade-in frames
+var HEALTHBAR_FADEOUT = 40;			// fade-out frames at the end of the cooldown
+var HEALTHBAR_SEGMENTS = 10;		// number of visual segments (notches divide the bar)
+
+// Draws a small, accurate health bar above an entity's head. Assumes the context
+// is already translated to (entity.posX, entity.posY) as it is inside EntityDraw.
+function DrawEntityHealthBar(entity)
+{
+	var barW = 156;
+	var barH = 18;
+	var topY = -(entity.zHeight + 75) - entity.posZ;	// above the head; -posZ so it follows jumps
+
+	var alpha = Math.min(normalizeValue(entity.framesSinceDamaged, 0, HEALTHBAR_FADEIN),
+						 normalizeValue(HEALTHBAR_COOLDOWN - entity.framesSinceDamaged, 0, HEALTHBAR_FADEOUT));
+	var frac = normalizeValue(entity.health, 0, entity.maxHealth);
+
+	// Dark backing panel
+	ctx.fillStyle = "#000000";
+	ctx.globalAlpha = 0.5 * alpha;
+	ctx.fillRect(-barW / 2 - 2, topY - 2, barW + 4, barH + 4);
+
+	// Health fill (purple while being seduced/recruited, on-brand pink otherwise)
+	if (entity.corrupted || entity.recruited)
+		ctx.fillStyle = "#b3169f";
+	else
+		ctx.fillStyle = "#FF0169";
+	ctx.globalAlpha = alpha;
+	ctx.fillRect(-barW / 2, topY, barW * frac, barH);
+
+	// Segment notches: thin dark dividers laid over the bar
+	ctx.fillStyle = "#000000";
+	ctx.globalAlpha = 0.6 * alpha;
+	var segW = barW / HEALTHBAR_SEGMENTS;
+	for (var s = 1; s < HEALTHBAR_SEGMENTS; s++)
+		ctx.fillRect(-barW / 2 + s * segW - 1, topY, 2, barH);
+
+	ctx.globalAlpha = 1.0;
 };
 
 function DrawStatusIndicator(value, xoffset, zheight, outlineSprite, fillSprite)
@@ -578,7 +629,10 @@ function EntityUpdate()
 		
 	if (this.smokeHitEffectCounter > 0)
 		this.smokeHitEffectCounter -= 1;
-	
+
+	// Time since last damaged, for the floating health bar
+	this.framesSinceDamaged++;
+
 	// Update the attack
 	this.framesSinceLastConnectingAttack++;
 	if (this.attack !== null)
@@ -1093,7 +1147,10 @@ function EntityHit(attack, isCaptive)
 		if ((attack.corruptionDealt > 0 && this.corruptable) || attack.damageDealt > 0  || hitStun > 0)
 		{
 			if (this.showDamageMeter)
+			{
+				this.framesSinceDamaged = 0; // Show the floating health bar
 				enemyinfo.NotifyHit(this); // Notify the enemy health popup
+			}
 			attack.NotifyDamage(this, attackDamageActuallyDealt, corruptDamageActuallyDealt); // Notify the attack that it connected
 
 		}
@@ -1123,8 +1180,11 @@ function EntityHit(attack, isCaptive)
 			}
 			
 			if (this.showDamageMeter)
+			{
+				this.framesSinceDamaged = 0; // Show the floating health bar
 				enemyinfo.NotifyHit(this); // Notify the enemy health popup
-				
+			}
+
 			if (wasAlive)
 				attack.NotifyDamage(this, 0, corruptDamageActuallyDealt); // Notify the attack that it connected
 		}
@@ -1137,7 +1197,10 @@ function EntityCapture(captor)
 	
 	// Notify the health bar overlay that you've been hit
 	if (this.showDamageMeter)
+	{
+		this.framesSinceDamaged = 0; // Show the floating health bar
 		enemyinfo.NotifyHit(this);
+	}
 
 	if (this.state === States.Corrupt || this.state === States.PreCorrupt)
 	{
