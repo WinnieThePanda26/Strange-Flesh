@@ -27,6 +27,7 @@ GlobalResourceLoader.AddImageResource("health_bar_filled","images/menus/health_b
 GlobalResourceLoader.AddImageResource("health_bar","images/menus/health_bar.png");
 GlobalResourceLoader.AddImageResource("life_symbol","images/menus/life_symbol.png");
 GlobalResourceLoader.AddImageResource("life_symbol_lit","images/menus/life_symbol_lit.png");
+GlobalResourceLoader.AddImageResource("poppers_symbol","new_images/poppers_symbol.png");
 GlobalResourceLoader.AddImageResource("sheet_Smoke_Puff","images/smoke/sheet_Smoke_Puff.txt");
 
 function HUD(owner)
@@ -53,6 +54,7 @@ function HUD(owner)
 	
 	this.lifeSymbol = GlobalResourceLoader.GetSprite("life_symbol");
 	this.lifeSymbolLit = GlobalResourceLoader.GetSprite("life_symbol_lit");
+	this.poppersSymbol = GlobalResourceLoader.GetSprite("poppers_symbol");
 	
 	this.playerHealthFraction = 0;
 	this.dominationFraction = 0;
@@ -67,7 +69,9 @@ function HUD(owner)
 	this.lives = 0;
 	this.lifeSmokePuffs = [];
 	this.enableLifeDisplay = false;
-	
+
+	this.poppers = 0;
+
 	// Create the smoke puff animation for use by the HUD
 	this.puff = new Animation(this);
 	this.puff.repeat = 0;
@@ -114,7 +118,9 @@ HUD.prototype.Reset = function()
 	this.lives = 0;
 	this.lifeSmokePuffs = [];
 	this.enableLifeDisplay = false;
-	
+
+	this.poppers = 0;
+
 	this.hudAlpha = 0;
 	this.hudHidden = false;
 	this.displayDrawPending = false;
@@ -311,8 +317,19 @@ if (this.enabled)
 			}
 			ctx.globalCompositeOperation = "source-over";
 		}
-		
-    	
+
+		if (this.enableLifeDisplay)
+		{
+			// Draw the poppers stash on the right, mirroring the lives on the left.
+			// Anchored to the right edge (designWidth) and marching leftward.
+			for (var i = 0; i < this.poppers; i++)
+			{
+				var poppersX = designWidth - (20 * pxScale - 21) - this.poppersSymbol.width * pxScale - i * 80;
+				this.poppersSymbol.DrawSprite3x( poppersX, 50 * 3.0 - 21);
+			}
+		}
+
+
     	//Finally, on top of everything else, draw the orbs.
     	ctx.globalAlpha = 1.0;
     	for (var i = 0; i < this.orbs.length; i++)
@@ -424,7 +441,13 @@ HUD.prototype.CollectOrb = function(orb)
 		orb.destX = 20 * pxScale + (lives+1) * 80;
 		orb.destY = 50 * pxScale;
 	}
-	
+	else if (orb.kind === ORB_POPPERS)
+	{
+		// Mirror of the life target, anchored to the right edge
+		orb.destX = designWidth - (20 * pxScale - 21) - this.poppersSymbol.width * pxScale - poppers * 80;
+		orb.destY = 50 * pxScale;
+	}
+
 	// Play the orb's collection SFX
 	orb.pickupSFX.Play(0.5);
 	
@@ -495,7 +518,10 @@ HUD.prototype.Update = function()
 		
 		this.lives = lives;
 	}
-	
+
+	// Keep the HUD's poppers count in sync with the global stash
+	this.poppers = poppers;
+
 	if (this.hudMessageTimer > 0)
 	{
 		this.hudMessageTimer -= 1;

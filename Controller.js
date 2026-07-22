@@ -61,7 +61,11 @@ function Controller(owner)
 	this.start = false;
 	this.startFramesSinceKeydown = 0;
 	this.startFramesSinceKeyup = 1;
-	
+
+	this.poppers = false;
+	this.poppersFramesSinceKeydown = 0;
+	this.poppersFramesSinceKeyup = 1;
+
 	this.any = false;
 	this.anyFramesSinceKeydown = 0;
 	this.anyFramesSinceKeyup = 1;
@@ -76,6 +80,7 @@ function Controller(owner)
 	this.specialFramesSinceKeydownTry = 1;
 	this.jumpFramesSinceKeydownTry = 1;
 	this.startFramesSinceKeydownTry = 1;
+	this.poppersFramesSinceKeydownTry = 1;
 };
 
 Controller.prototype.update = function()
@@ -90,6 +95,7 @@ Controller.prototype.update = function()
 	this.specialFramesSinceKeydown += 1;
 	this.jumpFramesSinceKeydown += 1;
 	this.startFramesSinceKeydown += 1;
+	this.poppersFramesSinceKeydown += 1;
 	this.anyFramesSinceKeydown += 1;
 	
 	this.upFramesSinceKeyup += 1;
@@ -102,6 +108,7 @@ Controller.prototype.update = function()
 	this.specialFramesSinceKeyup += 1;
 	this.jumpFramesSinceKeyup += 1;
 	this.startFramesSinceKeyup += 1;
+	this.poppersFramesSinceKeyup += 1;
 	this.anyFramesSinceKeyup += 1;
 	
 	this.upFramesSinceShortTap += 1;
@@ -132,6 +139,8 @@ Controller.prototype.update = function()
 			this.jumpKeyUp();
 		if (this.start && this.startFramesSinceKeydownTry > 0)
 			this.startKeyUp();
+		if (this.poppers && this.poppersFramesSinceKeydownTry > 0)
+			this.poppersKeyUp();
 	}
 	
 	if (this.up)
@@ -154,6 +163,8 @@ Controller.prototype.update = function()
 		this.jumpFramesSinceKeydownTry += 1;
 	if (this.start)
 		this.startFramesSinceKeydownTry += 1;
+	if (this.poppers)
+		this.poppersFramesSinceKeydownTry += 1;
 };
 
 Controller.prototype.upKeyUp = function()
@@ -222,6 +233,12 @@ Controller.prototype.startKeyUp = function()
 {
 	this.start = false;
 	this.startFramesSinceKeyup = 0;
+};
+
+Controller.prototype.poppersKeyUp = function()
+{
+	this.poppers = false;
+	this.poppersFramesSinceKeyup = 0;
 };
 
 Controller.prototype.anyKeyUp = function()
@@ -330,6 +347,16 @@ Controller.prototype.startKeyDown = function()
 	this.startFramesSinceKeydownTry = 0;
 };
 
+Controller.prototype.poppersKeyDown = function()
+{
+	if (!this.poppers)
+	{
+		this.poppers = true;
+		this.poppersFramesSinceKeydown = 0;
+	}
+	this.poppersFramesSinceKeydownTry = 0;
+};
+
 Controller.prototype.anyKeyDown = function()
 {
 	if (!this.any)
@@ -387,6 +414,11 @@ Controller.prototype.jumpActivate = function()
 Controller.prototype.startActivate = function()
 {
 	return this.start && this.startFramesSinceKeydown == 0;
+};
+
+Controller.prototype.poppersActivate = function()
+{
+	return this.poppers && this.poppersFramesSinceKeydown == 0;
 };
 
 Controller.prototype.anyActivate = function()

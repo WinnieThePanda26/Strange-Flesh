@@ -13,12 +13,14 @@ var ORB_HEALTH = 1;
 var ORB_DOMINATE = 2;
 var ORB_CORRUPT = 3;
 var ORB_LIFE = 4;
+var ORB_POPPERS = 5;
 
 GlobalResourceLoader.AddImageResource("healthorb","images/effect/orb_heath.png",1,32);
 GlobalResourceLoader.AddSequentialImageResources("corruptionorb{0}","images/effect/orb_corruption{0}.png",1,11);
 GlobalResourceLoader.AddSequentialImageResources("dominationorb{0}","images/effect/orb_domination{0}.png",1,6);
 
 GlobalResourceLoader.AddImageResource("life_symbol","images/menus/life_symbol.png");
+GlobalResourceLoader.AddImageResource("poppers_symbol","new_images/poppers_symbol.png");
 
 GlobalResourceLoader.AddImageResource("glowcorruption","images/effect/glowcorruption.png");
 GlobalResourceLoader.AddImageResource("glowdomination","images/effect/glowdomination.png");
@@ -169,7 +171,14 @@ CollectableOrb.prototype.ReInit = function()
 		this.glowimage = GlobalResourceLoader.GetSprite("glowhealth");
 		this.pickupSFX = GlobalResourceLoader.GetSound("healthpickup");
 	}
-	
+	else if (this.kind === ORB_POPPERS)
+	{
+		this.animation = new Animation(this, "poppers_symbol", 1, 1.0);
+		this.fillColor = "#e8b040";
+		this.glowimage = GlobalResourceLoader.GetSprite("glowcorruption");
+		this.pickupSFX = GlobalResourceLoader.GetSound("healthpickup");
+	}
+
 	this.pickupSFX.allowOverlap = true;
 	
 	// Give each orb a random animation offset so they don't all spin in unison
@@ -302,7 +311,13 @@ CollectableOrb.prototype.Update = function()
 				if (player.health < player.maxHealth)
 					hud.CollectOrb(this);
 			}
-			else 
+			else if (this.kind === ORB_POPPERS)
+			{
+				// Only pick up a popper if there's room in the stash
+				if (poppers < maxPoppers)
+					hud.CollectOrb(this);
+			}
+			else
 			{
 				hud.CollectOrb(this);
 			}
@@ -344,6 +359,10 @@ CollectableOrb.prototype.Update = function()
 			else if (this.kind === ORB_LIFE)
 			{
 				lives += 1;
+			}
+			else if (this.kind === ORB_POPPERS)
+			{
+				poppers = Math.min(poppers + 1, maxPoppers);
 			}
 		}
 	}

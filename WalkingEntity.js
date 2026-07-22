@@ -291,8 +291,13 @@ function EntityReleaseOrbs()
 	
 	for (var i=0; i < this.lifeOrbsHeld; i++)
 		level.entities.AddEntity(new CollectableOrb(ORB_LIFE, false, this, 0, 0, this.orbSpawnType));
-	
-		
+
+	// 25% chance for a defeated enemy to drop a popper. Gated on alliance 2 so
+	// only real enemies drop (dominated or corrupted enemies stay alliance 2),
+	// not the player (1) or neutral props/furniture (0).
+	if (this.alliance === 2 && Math.random() < 0.25)
+		level.entities.AddEntity(new CollectableOrb(ORB_POPPERS, false, this, 0, 0, this.orbSpawnType));
+
 	for (var i=0; i < this.internalObjects.length; i++)
 	{
 		this.internalObjects[i].posX = this.posX;

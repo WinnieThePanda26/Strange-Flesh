@@ -30,6 +30,7 @@ function PlayerInputController()
 	this.specialButtonMonitor = new GamepadButtonMonitor(0, 4, this, 0, PlayerInputController.prototype.specialKeyUp, PlayerInputController.prototype.specialKeyDown );
 	this.jumpButtonMonitor = new GamepadButtonMonitor(0, 3, this, 0, PlayerInputController.prototype.jumpKeyUp, PlayerInputController.prototype.jumpKeyDown );
 	this.startButtonMonitor = new GamepadButtonMonitor(0, 9, this, 0, PlayerInputController.prototype.startKeyUp, PlayerInputController.prototype.startKeyDown );
+	this.poppersButtonMonitor = new GamepadButtonMonitor(0, 5, this, 0, PlayerInputController.prototype.poppersKeyUp, PlayerInputController.prototype.poppersKeyDown );
 	//this.resetBindings();
 	
 	this.usePermBindings = true;
@@ -48,6 +49,7 @@ PlayerInputController.prototype.resetBindings = function()
 	settings.specialKeyCode = 186;
 	settings.jumpKeyCode = 32;
 	settings.startKeyCode = 13;
+	settings.poppersKeyCode = 80;
 
     // Controller binds
     this.upButtonMonitor.SetConfig([0, 12, 0]);
@@ -60,6 +62,7 @@ PlayerInputController.prototype.resetBindings = function()
     this.specialButtonMonitor.SetConfig([0, 4, 0 ]);
     this.jumpButtonMonitor.SetConfig([0, 3, 0 ]);
     this.startButtonMonitor.SetConfig([0, 9, 0 ]);
+    this.poppersButtonMonitor.SetConfig([0, 5, 0 ]);
 
 	saveSettings();
 };
@@ -145,6 +148,10 @@ PlayerInputController.prototype.keyDown = function(evt)
 		{
 			settings.jumpKeyCode = evt.keyCode;
 		}
+		else if (this.keyToBind === 10)
+		{
+			settings.poppersKeyCode = evt.keyCode;
+		}
 
 		this.bindingKey = false;
 		this.keyToBind = -1;
@@ -193,6 +200,10 @@ PlayerInputController.prototype.keyDown = function(evt)
 	{
 		this.startKeyDown();
 	}
+	if (evt.keyCode == settings.poppersKeyCode)	// P = use poppers
+	{
+		this.poppersKeyDown();
+	}
 	controller.anyKeyDown();
 };
 
@@ -238,6 +249,10 @@ PlayerInputController.prototype.keyUp = function(evt)
 	{
 		controller.startKeyUp();
 	}
+	if (evt.keyCode == settings.poppersKeyCode)	// P = use poppers
+	{
+		controller.poppersKeyUp();
+	}
 	controller.anyKeyUp();
 };
 
@@ -282,6 +297,10 @@ PlayerInputController.prototype.getStartKeyName = function()
 {
 	return getStringFromKeyCode(settings.startKeyCode);
 };
+PlayerInputController.prototype.getPoppersKeyName = function()
+{
+	return getStringFromKeyCode(settings.poppersKeyCode);
+};
 
 PlayerInputController.prototype.getUpButtonName = function()
 {
@@ -322,6 +341,10 @@ PlayerInputController.prototype.getJumpButtonName = function()
 PlayerInputController.prototype.getStartButtonName = function()
 {
 	return this.startButtonMonitor.getName();
+};
+PlayerInputController.prototype.getPoppersButtonName = function()
+{
+	return this.poppersButtonMonitor.getName();
 };
 
 PlayerInputController.prototype.bindUpKey = function()
@@ -474,6 +497,21 @@ PlayerInputController.prototype.bindStartKey = function()
     this.buttonToBind.bindMode = true;
 };
 
+PlayerInputController.prototype.bindPoppersKey = function()
+{
+	// You cannot bind two keys at once
+	if (this.bindingKey)
+		return;
+
+	// Mark the key as being bound
+	this.bindingKey = true;
+
+	// Set something to say which key is being bound
+	this.keyToBind = 10;
+    this.buttonToBind = this.poppersButtonMonitor;
+    this.buttonToBind.bindMode = true;
+};
+
 // Inherit all this boilerplate from the standard controller object.
 PlayerInputController.prototype.update = function()
 {
@@ -489,6 +527,7 @@ PlayerInputController.prototype.update = function()
 	this.specialButtonMonitor.Update();
 	this.jumpButtonMonitor.Update();
 	this.startButtonMonitor.Update();
+	this.poppersButtonMonitor.Update();
 };
 
 PlayerInputController.prototype.upKeyUp = Controller.prototype.upKeyUp;
@@ -501,6 +540,7 @@ PlayerInputController.prototype.grabKeyUp = Controller.prototype.grabKeyUp;
 PlayerInputController.prototype.specialKeyUp = Controller.prototype.specialKeyUp;
 PlayerInputController.prototype.jumpKeyUp = Controller.prototype.jumpKeyUp;
 PlayerInputController.prototype.startKeyUp = Controller.prototype.startKeyUp;
+PlayerInputController.prototype.poppersKeyUp = Controller.prototype.poppersKeyUp;
 PlayerInputController.prototype.anyKeyUp = Controller.prototype.anyKeyUp;
 
 PlayerInputController.prototype.upKeyDown = Controller.prototype.upKeyDown;
@@ -513,6 +553,7 @@ PlayerInputController.prototype.grabKeyDown = Controller.prototype.grabKeyDown;
 PlayerInputController.prototype.specialKeyDown = Controller.prototype.specialKeyDown;
 PlayerInputController.prototype.jumpKeyDown = Controller.prototype.jumpKeyDown;
 PlayerInputController.prototype.startKeyDown = Controller.prototype.startKeyDown;
+PlayerInputController.prototype.poppersKeyDown = Controller.prototype.poppersKeyDown;
 PlayerInputController.prototype.anyKeyDown = Controller.prototype.anyKeyDown;
 
 PlayerInputController.prototype.upActivate = Controller.prototype.upActivate;
@@ -525,6 +566,7 @@ PlayerInputController.prototype.grabActivate = Controller.prototype.grabActivate
 PlayerInputController.prototype.specialActivate = Controller.prototype.specialActivate;
 PlayerInputController.prototype.jumpActivate = Controller.prototype.jumpActivate;
 PlayerInputController.prototype.startActivate = Controller.prototype.startActivate;
+PlayerInputController.prototype.poppersActivate = Controller.prototype.poppersActivate;
 PlayerInputController.prototype.anyActivate = Controller.prototype.anyActivate;
 
 PlayerInputController.prototype.upDeactivate = Controller.prototype.upDeactivate;

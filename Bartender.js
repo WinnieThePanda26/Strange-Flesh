@@ -1042,7 +1042,16 @@ Bartender.prototype.UpdateState = function()
 		{
 			this.ChangeState(States.Jump);
 		}
-		
+
+		// Use a popper: consume one and play the sniff gesture. The drunkenness is
+		// applied at the end of the Sniff state (see UpdateState), so the drunk
+		// visuals/stumble ramp in right after Joe finishes sniffing.
+		if (this.controller.poppersActivate() && poppers > 0)
+		{
+			poppers -= 1;
+			this.ChangeState(States.Sniff);
+		}
+
 		// Change to Fuck or Grab State
 		if (this.controller.grabActivate())
 		{
@@ -1630,8 +1639,35 @@ Bartender.prototype.UpdateState = function()
 	{
 		if (this.stateFrames === 20)
 			this.attack.PlaySFX();
-			
+
 		this.ChangeStateOnAttackComplete(States.Walk);
+	}
+	else if (this.state === States.Sniff)
+	{
+		// A quick "sniff the poppers" gesture. First pass: reuse Joe's hand-to-face
+		// smoke animation as a stand-in for holding the bottle to his nose, spawn a
+		// puff of smoke, then top up the drunk timer so the drunk sway takes over.
+		if (this.stateFrames === 1)
+		{
+			this.animationModel.ChangeState("sniff");
+			this.desperationSFX.Play();
+		}
+
+		// Puff of smoke near his face, once he has raised the bottle to his nose.
+		if (this.stateFrames === 24)
+		{
+			var puff = new SmokePuff(this, 0, 111);
+			puff.velZ += 1;
+			level.entities.AddEffect(puff);
+		}
+
+		// End of the gesture: apply the drunkenness (stacks up to the max) and drop
+		// back to Walk, where drunkTimer > 0 makes the idle become the drunk sway.
+		if (this.stateFrames >= 42)
+		{
+			this.drunkTimer = Math.min(this.drunkTimer + 15 * fps, this.maxDrunkTimer);
+			this.ChangeState(States.Walk);
+		}
 	}
 	else if (this.state === States.Tackle)
 	{
@@ -2368,6 +2404,7 @@ GlobalResourceLoader.AddImageResource("sheet_Bartender_Basic","images/bartender/
 GlobalResourceLoader.AddImageResource("sheet_Bartender_Basic_Drunk","images/bartender/sheet_Bartender_Basic_Drunk.txt");
 GlobalResourceLoader.AddImageResource("sheet_Bartender_Drunk","images/bartender/sheet_Bartender_Drunk.txt");
 GlobalResourceLoader.AddImageResource("sheet_Bartender_Dash","images/bartender/sheet_Bartender_Dash.txt");
+GlobalResourceLoader.AddImageResource("sheet_Bartender_Sniff","new_images/bartender_sniff.txt");
 GlobalResourceLoader.AddImageResource("sheet_Bartender_DeathSmoke","images/bartender/sheet_Bartender_DeathSmoke.txt");
 GlobalResourceLoader.AddImageResource("sheet_Bartender_DesperationSmoke","images/bartender/sheet_Bartender_DesperationSmoke.txt");
 GlobalResourceLoader.AddImageResource("sheet_Bartender_smokedescent","images/bartender/sheet_Bartender_smokedescent.txt");
@@ -2723,7 +2760,25 @@ Bartender.prototype.animationSetup = function()
 	smokeIdleCancelState.SetMainAnimation(smokeIdleAnim);
 	smokeIdleCancelState.AddDecoratorAnimation(smokeAttackCancelAnim);
 	this.animationModel.AddState("smokeidlecancel", smokeIdleCancelState);
-	
+
+	// Poppers sniff: Joe raises the bottle to his nose and sniffs. Three composited
+	// frames (chin -> mouth -> nose) built from his smoke-charge poses with the bottle
+	// painted into his fist; the nose frame is held while the SmokePuff + drunk sway
+	// (in the Sniff state) play out. repeat=0 so it plays once and holds the last frame.
+	var sniffAnim = new Animation(this);
+	sniffAnim.repeat = 0;
+	sniffAnim.inheritFacing = 1;
+	sniffAnim.AddFrame("bartender/sniff1");
+	sniffAnim.AddFrame("bartender/sniff2");
+	sniffAnim.AddFrame("bartender/sniff3");
+	sniffAnim.AddFrame("bartender/sniff3");
+	sniffAnim.AddFrame("bartender/sniff3");
+	sniffAnim.AddFrame("bartender/sniff3");
+	sniffAnim.SetDurationInSeconds(0.8);
+	var sniffState = new AnimationState();
+	sniffState.SetMainAnimation(sniffAnim);
+	this.animationModel.AddState("sniff", sniffState);
+
 	var smokeWalkCancelState = new AnimationState();
 	smokeWalkCancelState.SetMainAnimation(smokeWalkAnim);
 	smokeWalkCancelState.AddDecoratorAnimation(smokeAttackCancelAnim);

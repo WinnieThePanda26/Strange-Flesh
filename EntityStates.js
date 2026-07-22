@@ -71,6 +71,7 @@ var States = {
   Sidehop: 58,
   VulnerableDash: 59,
   Taunt: 60,
+  Sniff: 61,
 };
 
 function OkToSave(state)

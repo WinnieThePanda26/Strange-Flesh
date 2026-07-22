@@ -1205,7 +1205,12 @@ function ShowControlsMenu()
 					{ "element":"keybind", "label":"Select", "assignedKeyboardFunction":controller.getStartKeyName, "assignedControllerFunction":controller.getStartButtonName, "onClick":function()
 						{
 							controller.bindStartKey();
-						} 
+						}
+					},
+					{ "element":"keybind", "label":"Poppers", "assignedKeyboardFunction":controller.getPoppersKeyName, "assignedControllerFunction":controller.getPoppersButtonName, "onClick":function()
+						{
+							controller.bindPoppersKey();
+						}
 					},
 					{ "element":"spacer", "size":15},
 					
