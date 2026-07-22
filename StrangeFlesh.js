@@ -113,6 +113,11 @@ var level = null;
 var overlays=[];
 var menuStack=[];
 
+// Lairs: self-running showcase mode (see Lairs.js). When lairsMode is true the
+// Bartender is AI-driven and lairsDirector spawns/stages the showcase enemies.
+var lairsMode = false;
+var lairsDirector = null;
+
 // Define global acceleration due to gravity.
 var gravity = 2.4;
 
@@ -199,6 +204,7 @@ include("Cutscene.js");
 include("LevelStartTransition.js");
 include("DebugOverlay.js");
 include("Checkpoint.js");
+include("Lairs.js");
 // almost
 
 function StrangeFlesh() 
@@ -287,6 +293,10 @@ function StrangeFlesh()
 
 function resetGame()
 {
+	// Leaving any Lairs session behind (e.g. via pause -> Exit to Title).
+	lairsMode = false;
+	lairsDirector = null;
+
 	// Create the player
 	player = new Bartender();
 	player.disableSpawnOnScroll = true;
@@ -1389,7 +1399,11 @@ function updateAll()
 		
 		// Update the camera position at the end
 		camera.Update();
-		
+
+		// Lairs: spawn/stage the showcase after the camera has settled this frame
+		if (lairsMode && lairsDirector !== null)
+			lairsDirector.Update();
+
 		entityFrameskipCounter = entityFrameskip;
 	}
 	else
@@ -1427,7 +1441,7 @@ function updateAll()
 		}
 		else
 		{
-			if (lives <= 0)
+			if (lives <= 0 && !lairsMode)
 			{
 				ShowGameOverCutscene();
 			}
