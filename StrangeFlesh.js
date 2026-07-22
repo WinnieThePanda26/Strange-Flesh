@@ -36,6 +36,8 @@ var watermarkOwner = ""
 
 var lives = 1;
 var startingLives = 5;
+var poppers = 0;
+var maxPoppers = 5;
 var continuesUsed = 0;
 var neverSaved = true;
 var windowSettingsStale = true;
@@ -297,6 +299,7 @@ function resetGame()
 	
 	neverSaved = true;
 	lives = startingLives;
+	poppers = 0;
 	enemiesDispatched = 0;
 	enemiesCorrupted = 0;
 	totalEnemies = 948;
@@ -335,8 +338,9 @@ function saveGame()
 		}
 	}
 	
-	var savedGame = { 
+	var savedGame = {
 						"lives": lives,
+						"poppers": poppers,
 						"playerHealth": player.health,
 						"playerState": player.state,
 						"playerStateFrames": player.stateFrames,
@@ -374,6 +378,7 @@ function loadGame()
 		GlobalResourceLoader.GameNotReady();
 		
 		lives = savedGame.lives;
+		poppers = savedGame.poppers || 0;
 		continuesUsed = savedGame.continuesUsed;
 		
 		clearLevelCache();
@@ -443,6 +448,7 @@ function saveSettings()
     settings["specialButtonConfig"] = controller.specialButtonMonitor.GetConfig();
     settings["jumpButtonConfig"] = controller.jumpButtonMonitor.GetConfig();
     settings["startButtonConfig"] = controller.startButtonMonitor.GetConfig();
+    settings["poppersButtonConfig"] = controller.poppersButtonMonitor.GetConfig();
 
 	var settingsString = JSON.stringify(settings);
 	localStorage.setItem("GameSettings", settingsString);	
@@ -499,6 +505,7 @@ function loadSettings()
 						"specialKeyCode": 186,
 						"jumpKeyCode": 32,
 						"startKeyCode": 13,
+						"poppersKeyCode": 80,
 
                         // Controller binds
                         "upButtonConfig":      [0, 12, 0],
@@ -510,7 +517,8 @@ function loadSettings()
 						"grabButtonConfig":    [0, 2, 0 ],
 						"specialButtonConfig": [0, 4, 0 ],
 						"jumpButtonConfig":    [0, 3, 0 ],
-						"startButtonConfig":   [0, 9, 0 ] 
+						"startButtonConfig":   [0, 9, 0 ],
+						"poppersButtonConfig": [0, 5, 0 ]
 					};
 	
 	var settingsString = localStorage.getItem("GameSettings");
@@ -539,6 +547,7 @@ function loadSettings()
         controller.specialButtonMonitor.SetConfig(settings["specialButtonConfig"]);
         controller.jumpButtonMonitor.SetConfig(settings["jumpButtonConfig"]);
         controller.startButtonMonitor.SetConfig(settings["startButtonConfig"]);
+        controller.poppersButtonMonitor.SetConfig(settings["poppersButtonConfig"]);
 		
 		// Some of the properties changed needed a little kick to take effect immediately
 		GlobalMusic.setVolume(settings.musicLevelGameplay);
@@ -569,6 +578,7 @@ function useContinue()
 	}
 	
 	lives = startingLives;
+	poppers = 0;
 	playerFirstSpawn = true;
 	startupTimer = 0;
 	respawnCounter = 0;
@@ -702,6 +712,7 @@ function keyDown(evt)
 			player.health = player.maxHealth;
 			player.sexMeter = player.maxSexMeter;
 			lives = startingLives;
+			poppers = maxPoppers;
 		}
 	}
 	
@@ -718,6 +729,7 @@ function keyDown(evt)
 			player.health = 1;
 			player.sexMeter = 0;
 			lives = 1;
+			poppers = 0;
 		}
 	}
 	
