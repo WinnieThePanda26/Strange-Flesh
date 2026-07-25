@@ -449,6 +449,10 @@ function AudioResource(key, src, samples)
 	this.src = src;
 	this.lastPlayFinishTime = -1;
 	this.allowOverlap = false;
+	// Play() copies this onto every buffer source it creates. It is shared by every
+	// caller of GetSound(key), so anything that turns it on owes everyone turning it
+	// back off — a looping source whose handle is dropped plays until the page closes.
+	this.loop = false;
 	this.loading = false;
 	this.loaded = false;
 	this.error = false;

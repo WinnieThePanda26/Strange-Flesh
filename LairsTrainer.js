@@ -70,6 +70,20 @@ function LairsTrainer()
 	this.hitSound = GlobalResourceLoader.GetSound("menu_boop");
 };
 
+// Every cue goes through here. GetSound() hands out one shared AudioResource per key,
+// and its "loop" flag is copied onto each source Play() creates — so a cue fired while
+// someone else has that flag set becomes a looping source that this code never holds a
+// handle to, and it plays for the rest of the session: through the pause menu, through
+// exiting to the main menu, on and on. (The opening cutscene used to leave text_click
+// flagged exactly that way.) Cheap insurance: never fire a cue without clearing it.
+LairsTrainer.prototype.PlayCue = function(sound, volume)
+{
+	if (sound === null)
+		return;
+	sound.loop = false;
+	sound.Play(volume);
+};
+
 // Seconds between hits, tightening as the session goes if escalation is on.
 LairsTrainer.prototype.IntervalFrames = function()
 {
@@ -164,8 +178,7 @@ LairsTrainer.prototype.Update = function()
 		if (remaining !== this.lastTick && remaining > 0)
 		{
 			this.lastTick = remaining;
-			if (this.tickSound !== null)
-				this.tickSound.Play(0.8);
+			this.PlayCue(this.tickSound, 0.8);
 		}
 
 		if (this.phaseTimer >= LAIRS_WARN_FRAMES)
@@ -183,8 +196,7 @@ LairsTrainer.prototype.Update = function()
 	{
 		if (this.phaseTimer >= this.holdSeconds * fps)
 		{
-			if (this.tickSound !== null)
-				this.tickSound.Play(0.8);
+			this.PlayCue(this.tickSound, 0.8);
 			this.ChangePhase(LairsPhase.Release);
 		}
 	}
@@ -214,8 +226,7 @@ LairsTrainer.prototype.ChangePhase = function(phase)
 // late; the call, the freeze and the hold all still run.
 LairsTrainer.prototype.TakeTheHit = function()
 {
-	if (this.hitSound !== null)
-		this.hitSound.Play(1.0);
+	this.PlayCue(this.hitSound, 1.0);
 
 	if (player === null || player.ai === null)
 		return;

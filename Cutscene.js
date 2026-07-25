@@ -31,8 +31,11 @@ GlobalResourceLoader.AddAudioResource("text_click","sound/menu/text_click.mp3");
 function Cutscene()
 {	
 	this.activateSound = GlobalResourceLoader.GetSound("menu_boop");
+	// NB: GetSound returns the one shared AudioResource for this key, so "loop" is not
+	// private to this cutscene — anything that plays text_click afterwards gets a looping
+	// buffer source too, and a looping source nobody holds a handle to plays for the rest
+	// of the session. So it's set around the Play/stop pair below instead of here.
 	this.textSound = GlobalResourceLoader.GetSound("text_click");
-	this.textSound.loop = true;
 	this.textSoundPlayback = null;
 	
 	this.currentAmbientLoop = null;
@@ -526,6 +529,7 @@ Cutscene.prototype.Update = function()
 					this.updateTimer = this.charDelay;
 					if (this.textSoundPlayback === null)
 					{
+						this.textSound.loop = true;
 						this.textSoundPlayback = this.textSound.Play();
 					}
 				}
@@ -541,6 +545,7 @@ Cutscene.prototype.Update = function()
 	{
 		this.textSoundPlayback.stop();
 		this.textSoundPlayback = null;
+		this.textSound.loop = false;   // hand the shared resource back unflagged
 	}
 	
 	this.updateAmbientLoop();
@@ -555,6 +560,7 @@ Cutscene.prototype.Update = function()
 			this.textSoundPlayback.stop();
 			this.textSoundPlayback = null;
 		}
+		this.textSound.loop = false;   // hand the shared resource back unflagged
 		
 		if (this.onClose !== null)
 		{

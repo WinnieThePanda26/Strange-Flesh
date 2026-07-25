@@ -167,6 +167,15 @@ function startLairsMode()
 // Exit to Title). Safe to call when Lairs was never entered.
 function endLairsMode()
 {
+	// Backstop: silence every private looping sound still on the stage before the level
+	// goes away. Leaving one running is the worst version of this bug — it follows the
+	// player out to the main menu with nothing left alive to stop it.
+	if (typeof(level) !== "undefined" && level !== null && level.entities)
+	{
+		for (var s = 0; s < level.entities.list.length; s++)
+			LairsSilenceEntity(level.entities.list[s]);
+	}
+
 	lairsMode = false;
 	lairsDirector = null;
 
@@ -855,10 +864,15 @@ LairsDirector.prototype.UpdateBackgroundChars = function()
 		if (typeof(e.posX) !== "number" || e.state === States.Dead ||
 			e.posX < camera.boundingRect.xMin - LAIRS_BG_RETIRE_MARGIN)
 		{
+			LairsSilenceEntity(e);   // nothing of his may outlive him
 			level.entities.Remove(e);
 			this.bgChars.splice(i, 1);
 			continue;
 		}
+
+		// He is scenery: he never rides, fights or revs, so nothing he owns should be
+		// making noise (see LairsSilenceEntity for why this has to be every frame).
+		LairsSilenceEntity(e);
 
 		// Hold him mid-corruption forever: keep him in the fapping Corrupt state and pin
 		// stateFrames below the orgasm ramp (fapSpeed only bottoms out, triggering climax,
@@ -879,7 +893,11 @@ LairsDirector.prototype.StageBackgroundChars = function()
 	var guard = 0;
 	while (this.bgCharFrontierX < limit && this.bgChars.length < LAIRS_MAX_BG_CHARS && guard++ < 6)
 	{
-		this.SpawnBackgroundChar(this.bgCharFrontierX);
+		// Only advance past a slot that actually got filled. SpawnBackgroundChar declines
+		// when every name it rolls is already on stage, and advancing anyway would walk the
+		// frontier off to the right — leaving the back plane bare until the camera caught up.
+		if (!this.SpawnBackgroundChar(this.bgCharFrontierX))
+			break;
 		this.bgCharFrontierX += LAIRS_BG_CHAR_GAP_MIN +
 			Math.random() * (LAIRS_BG_CHAR_GAP_MAX - LAIRS_BG_CHAR_GAP_MIN);
 	}
@@ -901,11 +919,11 @@ LairsDirector.prototype.SpawnBackgroundChar = function(px)
 		if (!taken[cand]) { name = cand; break; }
 	}
 	if (name === null)
-		return;
+		return false;
 
 	var MyClass = stringToFunction(name);
 	if (typeof(MyClass) !== "function")
-		return;
+		return false;
 
 	var e = new MyClass();
 	e.isLairsBgChar = true;   // exempt from the foreground roster counting and the far-behind cull
@@ -930,6 +948,23 @@ LairsDirector.prototype.SpawnBackgroundChar = function(px)
 
 	level.entities.AddEntity(e);
 	this.bgChars.push(e);
+	return true;
+};
+
+// Silence any looping sound a cast member owns privately — the EDRider's engine, the
+// boss's fireball loop. Those are started AND stopped from inside a single state branch
+// (States.Walk, for the engine), which works fine when the character is being played
+// normally. A Lairs background character is pinned in Corrupt forever, so if it ever
+// touches that branch — one frame of Walk as it lands on spawn is enough — the loop
+// starts and nothing ever stops it again: it outlives the character, survives the pause
+// menu, and keeps going after the session is over. Music.stop() is a no-op when nothing
+// is playing, so this is safe to call every frame.
+function LairsSilenceEntity(e)
+{
+	if ("engineNoise" in e && e.engineNoise !== null && typeof(e.engineNoise.stop) === "function")
+		e.engineNoise.stop();
+	if ("fireballSFX" in e && e.fireballSFX !== null && typeof(e.fireballSFX.stop) === "function")
+		e.fireballSFX.stop();
 };
 
 // Small smoke poof to cover a Joe leaving the show (mirrors SpawnEntityTransitionPuff).
