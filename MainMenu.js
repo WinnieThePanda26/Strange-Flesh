@@ -87,10 +87,18 @@ function MainMenu()
 	var menu = this;
 	this.items = [	
 					{ "element":"button", "label":"New Game", "onClick":function()
-						{ 
+						{
 							GlobalMusic.stop(1.0);
 							menu.closing = true;
-						} 
+						}
+					},
+					{ "element":"button", "label":"Lairs", "onClick":function()
+						{
+							// Self-running showcase mode (see Lairs.js). Always available
+							// so any player can watch the art without beating the game.
+							// Opens its config screen, which starts the session itself.
+							ShowLairsMenu();
+						}
 					},
 					{ "element":"button", "label":"Settings", "onClick":function()
 						{ 

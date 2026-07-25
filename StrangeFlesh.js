@@ -113,6 +113,13 @@ var level = null;
 var overlays=[];
 var menuStack=[];
 
+// Lairs: self-running showcase mode (see Lairs.js). When lairsMode is true the
+// Bartender is AI-driven and lairsDirector spawns/stages the showcase enemies.
+var lairsMode = false;
+var lairsDirector = null;
+var lairsStats = null;
+var lairsTrainer = null;
+
 // Define global acceleration due to gravity.
 var gravity = 2.4;
 
@@ -199,6 +206,8 @@ include("Cutscene.js");
 include("LevelStartTransition.js");
 include("DebugOverlay.js");
 include("Checkpoint.js");
+include("Lairs.js");
+include("LairsTrainer.js");
 // almost
 
 function StrangeFlesh() 
@@ -287,6 +296,10 @@ function StrangeFlesh()
 
 function resetGame()
 {
+	// Leaving any Lairs session behind (e.g. via pause -> Exit to Title): also puts the
+	// HUD back and drops the showcase stats panel (see endLairsMode in Lairs.js).
+	endLairsMode();
+
 	// Create the player
 	player = new Bartender();
 	player.disableSpawnOnScroll = true;
@@ -494,6 +507,16 @@ function loadSettings()
 						"debugUnlockMessage": false,
 						"seenCredits":false,
 					
+						// Lairs showcase mode + its popper trainer (see LairsTrainer.js).
+						// All indices into the option tables at the top of that file.
+						"lairsTrainer": 1,        // 0 off (plain Lairs), 1 on
+						"lairsPace": 1,           // seconds between hits: chill / standard / intense
+						"lairsHoldShort": 1,      // short-hit hold length
+						"lairsHoldLong": 1,       // long-hit hold length
+						"lairsLongChance": 1,     // how often a hit is a long one
+						"lairsEscalate": 1,       // 0 off, 1 on (pace tightens over the session)
+						"lairsSession": 1,        // session length before the trainer stands down
+
 						// Keybinds
 						"upKeyCode": 87,
 						"downKeyCode": 83,
@@ -1351,24 +1374,34 @@ function updateAll()
 	     // Tell the camera to track the player
 	     if (player !== null)
 	     	camera.addObjectToTrack(player);
-	     
+
+		// Lairs trainer: during a hit the cast holds still so the moment belongs to the
+		// bartender (and to you). Everyone but him stops updating; effects keep running
+		// so his sniff and its smoke puff still play out. Anyone he currently has hold of
+		// is exempt too — if a hit had to be forced into a scene, freezing his captive
+		// would stall that scene half-played.
+		var lairsHitFreeze = (lairsMode && lairsTrainer !== null && lairsTrainer.IsFreezing());
+		var lairsHitCaptive = (lairsHitFreeze && player !== null) ? player.captive : null;
+
 		// Update all entities
-		for (var i = 0; i < level.entities.list.length; i++) 
+		for (var i = 0; i < level.entities.list.length; i++)
 		{
-			level.entities.list[i].Update();
-		
+			if (!lairsHitFreeze || level.entities.list[i] === player ||
+				level.entities.list[i] === lairsHitCaptive)
+				level.entities.list[i].Update();
+
 			// Remove any entities that are fully dead.
 			if (level.entities.list[i].state == States.Dead)
 			{
 				if ("OnRemovalFromGame" in level.entities.list[i])
 					level.entities.list[i].OnRemovalFromGame();
-				
+
 				level.entities.RemoveFromListAt(i);
 			}
 		}
-	
+
 		// Update attacks
-		for (var i = 0; i < activeAttacks.length; i++) 
+		for (var i = 0; !lairsHitFreeze && i < activeAttacks.length; i++)
 		{
 			// Update returns true if the attack was removed from the list
 			if (activeAttacks[i].Update())
@@ -1401,7 +1434,12 @@ function updateAll()
 		
 		// Update the camera position at the end
 		camera.Update();
-		
+
+		// Lairs: spawn/stage the showcase after the camera has settled this frame
+		// (not during a trainer hit — the stage holds exactly as it is).
+		if (lairsMode && lairsDirector !== null && !lairsHitFreeze)
+			lairsDirector.Update();
+
 		entityFrameskipCounter = entityFrameskip;
 	}
 	else
@@ -1439,7 +1477,7 @@ function updateAll()
 		}
 		else
 		{
-			if (lives <= 0)
+			if (lives <= 0 && !lairsMode)
 			{
 				ShowGameOverCutscene();
 			}

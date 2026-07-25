@@ -104,7 +104,10 @@ if (this.enabled && this.alpha > 0)
 			var totalHeight = this.repY*tileHeight;
 		
 
-			var xMin = camera.posX-960; // camera.boundingRect.xMin
+			// Left/top edge of the screen in world space. Half the *virtual* width, not a
+			// hardcoded 960: in widescreen the screen reaches further left, and anchoring
+			// a parallax-1 skybox at 960 left an uncovered strip down the left edge.
+			var xMin = camera.posX - getVirtualScreenWidth()/2; // camera.boundingRect.xMin
 			var yMin = camera.posY-540; // camera.boundingRect.yMin
 		
 			var posX = this.posX + ((xMin-this.posX)/totalWidth) * this.parallax * totalWidth;
