@@ -24,18 +24,20 @@
 // ---- Option tables ---------------------------------------------------------
 // Indexed by the matching settings.lairs* value (see loadSettings defaults).
 var LAIRS_PACE_SECONDS  = [90, 60, 40];   // seconds between hits
-var LAIRS_HOLD_SHORT    = [3, 5, 8];      // short-hit hold, seconds
-var LAIRS_HOLD_LONG     = [8, 12, 20];    // long-hit hold, seconds
+var LAIRS_HOLD_SHORT    = [2, 3, 4];      // short-hit hold, seconds
+var LAIRS_HOLD_LONG     = [4, 6, 10];     // long-hit hold, seconds
 var LAIRS_LONG_CHANCE   = [0, 0.3, 0.6];  // chance a given hit is a long one
 var LAIRS_SESSION_MINS  = [10, 20, 0];    // 0 = endless
 
 // ---- Tunables --------------------------------------------------------------
 var LAIRS_WARN_FRAMES = 180;              // 3s of 3-2-1 before the hit lands
-var LAIRS_HIT_FRAMES = 120;               // 2s "HIT" — the inhale window
+var LAIRS_HIT_FRAMES = 240;               // 4s "HIT" — the inhale window
 var LAIRS_RELEASE_FRAMES = 90;            // 1.5s "BREATHE" after the hold
 var LAIRS_HIT_SLACK_FRAMES = 480;         // up to 8s of give, so a hit prefers to land
                                           // between scenes rather than cutting one off
-var LAIRS_DRUNK_PER_HOLD_SECOND = 4;      // drunk seconds the bartender gets per second held
+var LAIRS_DRUNK_PER_HOLD_SECOND = 8;      // drunk seconds the bartender gets per second held.
+                                          // 8 rather than 4 because the hold lengths above were
+                                          // halved: this keeps how long he stays drunk where it was.
 var LAIRS_TRAINER_MAX_DRUNK = 300;        // Lairs-only drunk ceiling in seconds. The engine
                                           // default is 120 (WalkingEntity maxDrunkTimer), low
                                           // enough that long hits would all saturate at it and
@@ -404,8 +406,8 @@ function ShowLairsMenu()
 	menu.title = "Lairs";
 
 	var paceLabels = ["Chill (90s)", "Standard (60s)", "Intense (40s)"];
-	var shortLabels = ["3s", "5s", "8s"];
-	var longLabels = ["8s", "12s", "20s"];
+	var shortLabels = ["2s", "3s", "4s"];
+	var longLabels = ["4s", "6s", "10s"];
 
 	menu.items = [
 		{ "element":"multi", "label":"Popper Trainer", "options":["Off","On"],

@@ -32,6 +32,10 @@ var LAIRS_SPAWN = { x: 0, y: 825, z: 1000 };    // bartender start (same plane a
 // because it isn't kissable (it would stall the seduce) — a domination/sex path
 // for it is a later addition.
 var LAIRS_ENEMY_POOL = ["Joe1", "Joe2", "Joe3"];
+// Music the show can draw from: the level themes that are actually written to loop as
+// a backing bed. Deliberately excludes level0 (the quiet opening bed), level6 (a bare
+// ticking loop), final_sex, the endings and credits — see the pick in startLairsMode.
+var LAIRS_MUSIC_TRACKS = ["level1", "level2", "level3", "level4", "level5"];
 var LAIRS_TARGET_FRESH = 1;                     // max UNCORRUPTED enemy Joes on stage at once; the next is staged as soon
                                                  // as the current one is corrupted, so there's always someone to walk toward
 var LAIRS_MAX_TOTAL = 7;                         // hard backstop on total non-player roster
@@ -133,12 +137,16 @@ function startLairsMode()
 	level.Start();
 	camera.setPosition(player.posX, 540);
 
-	// Random music: any registered gameplay track (keys are the level names).
+	// Random music, from a NAMED list of the level themes — not "everything registered
+	// except the title". That pool also holds the set-piece beds: level6 is nothing but
+	// a ticking loop that points at itself (it never resolves, it just scratches away
+	// under the boss forever), and final_sex / the endings / credits are all cues written
+	// to play once at a specific moment. Any of them landing here sounded like a fault.
 	var trackKeys = [];
-	for (var k in GlobalMusic.tracks)
+	for (var i = 0; i < LAIRS_MUSIC_TRACKS.length; i++)
 	{
-		if (GlobalMusic.tracks.hasOwnProperty(k) && k !== "title")
-			trackKeys.push(k);
+		if (GlobalMusic.tracks.hasOwnProperty(LAIRS_MUSIC_TRACKS[i]))
+			trackKeys.push(LAIRS_MUSIC_TRACKS[i]);
 	}
 	var track = (trackKeys.length > 0) ? trackKeys[Math.floor(Math.random() * trackKeys.length)] : "level1";
 	GlobalMusic.stop();
@@ -150,6 +158,7 @@ function startLairsMode()
 	lairsDirector.Seed();   // populate the back plane now, while the transition still covers the screen
 
 	var lst = new LevelStartTransition();
+	lst.silent = true;   // its cutscene roar has no business opening a showcase
 	lst.Show();
 };
 

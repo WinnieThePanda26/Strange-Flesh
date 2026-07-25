@@ -78,6 +78,11 @@ function LevelStartTransition()
 	
 	this.eyeZoomSound = null;
 	this.tunnelSound = null;
+
+	// The eye-zoom and tunnel roar belong to the opening cutscene this transition was
+	// written for. Lairs reuses the visual as its curtain and sets this, because that
+	// roar over the main menu music reads as something being wrong with the audio.
+	this.silent = false;
 };
 
 LevelStartTransition.prototype.Show = function()
@@ -261,12 +266,16 @@ LevelStartTransition.prototype.Update = function()
 	{
 		if (cutsceneToLevelTransition !== null)
 		{
-			this.eyeZoomSound = GlobalResourceLoader.GetSound("eyezoom").Play(1.0);
-			this.tunnelSound = GlobalResourceLoader.GetSound("tunnel").Play(1.0, -1.6);
+			if (!this.silent)
+			{
+				this.eyeZoomSound = GlobalResourceLoader.GetSound("eyezoom").Play(1.0);
+				this.tunnelSound = GlobalResourceLoader.GetSound("tunnel").Play(1.0, -1.6);
+			}
 		}
 		else
 		{
-			this.tunnelSound = GlobalResourceLoader.GetSound("tunnel").Play(1.0, -1.6-(this.transitionInTime)/60.0);
+			if (!this.silent)
+				this.tunnelSound = GlobalResourceLoader.GetSound("tunnel").Play(1.0, -1.6-(this.transitionInTime)/60.0);
 			this.timer = this.transitionInTime;
 		}
 	}
