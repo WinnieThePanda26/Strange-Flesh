@@ -32,27 +32,38 @@ var LAIRS_SPAWN = { x: 0, y: 825, z: 1000 };    // bartender start (same plane a
 // because it isn't kissable (it would stall the seduce) — a domination/sex path
 // for it is a later addition.
 var LAIRS_ENEMY_POOL = ["Joe1", "Joe2", "Joe3"];
-var LAIRS_TARGET_FRESH = 1;                     // max LIVE enemy Joes on stage at once; the next won't arrive until the current one dies
+var LAIRS_TARGET_FRESH = 1;                     // max UNCORRUPTED enemy Joes on stage at once; the next is staged as soon
+                                                 // as the current one is corrupted, so there's always someone to walk toward
 var LAIRS_MAX_TOTAL = 7;                         // hard backstop on total non-player roster
-var LAIRS_SPENT_LIFESPAN = 300;                  // frames a recruited ally lingers before poofing (~5s); corrupt Joes self-die instead
+var LAIRS_SPENT_LIFESPAN = 300;                  // frames a recruited ally follows before he's left behind (~5s); corrupt Joes self-die instead
 var LAIRS_SPAWN_COOLDOWN = 80;                   // min frames between spawns; short, since the one-at-a-time gate above sets the real pace
 var LAIRS_SEX_CHANCE = 0.4;                      // chance a kiss escalates all the way to full sex
 var LAIRS_DRUNK_CHANCE = 0.12;                   // per-decision chance to hit a popper and go drunk
 var LAIRS_FAP_SPEEDUP = 2;                        // extra stateframes/frame added to a fapping Joe so his
                                                  // corruption reaches orgasm briskly (~4s) instead of ~12s
-var LAIRS_MAX_BG_PAIRS = 1;                       // background Joe couples on-screen at once (purely decorative)
-var LAIRS_BG_PAIR_COOLDOWN = 420;                // frames between background-pair spawns
+var LAIRS_ADMIRE_FRAMES = 150;                    // max frames the bartender stays to watch a Joe he just seduced finish
+                                                 // (~2.5s: long enough to read as "watching", short enough that the
+                                                 //  climax finishes behind him as he walks on rather than holding the show)
+
+// Back-plane decoration. Everything back here is *staged ahead of the camera* and
+// retired only once it has scrolled off the left edge — see StageBackgroundPairs /
+// StageBackgroundChars — so nothing ever appears or vanishes in view.
+var LAIRS_BG_LOOKAHEAD = 900;                     // how far past the right edge back-plane content is staged
+var LAIRS_BG_RETIRE_MARGIN = 500;                // how far past the left edge before it's retired
+var LAIRS_MAX_BG_PAIRS = 2;                       // background Joe couples alive at once (purely decorative)
+var LAIRS_BG_PAIR_GAP_MIN = 1900;                // world-X spacing between couples along the back plane
+var LAIRS_BG_PAIR_GAP_MAX = 3400;
 var LAIRS_BG_PAIR_Y = 600;                        // back-plane Y for background pairs (behind the bartender at ~825)
 
 // Permanently-corrupt showcase characters on the back plane, alongside the kissing
 // pairs — the non-Joe cast the player might never reach, held mid-fap forever.
 var LAIRS_BG_CHAR_POOL = ["OfficeAngel", "Admonitor", "EDRider", "StarvingArtist",
                           "PartyAnimal", "Fister", "PunkPuppy", "VirusFromVenus"];
-var LAIRS_MAX_BG_CHARS = 2;                       // corrupt showcase characters on-screen at once
-var LAIRS_BG_CHAR_COOLDOWN = 330;                // frames between corrupt-character spawns
+var LAIRS_MAX_BG_CHARS = 4;                       // corrupt showcase characters alive at once (staged + on-screen)
+var LAIRS_BG_CHAR_GAP_MIN = 800;                 // world-X spacing between them along the back plane
+var LAIRS_BG_CHAR_GAP_MAX = 1700;
 var LAIRS_BG_CHAR_Y = 585;                        // back-plane Y for the corrupt showcase characters
 var LAIRS_BG_CHAR_FAP_HOLD = 120;                // stateFrames pin: keeps them fapping forever (below the ~240 orgasm ramp)
-var LAIRS_BG_CHAR_LIFESPAN = 900;                // frames a corrupt character stays before rotating out (~15s) so the cast varies even when the camera barely scrolls
 
 // ---- Entry point -----------------------------------------------------------
 function startLairsMode()
@@ -95,6 +106,17 @@ function startLairsMode()
 	hud.Reset();
 	enemyinfo.Clear();
 
+	// No HUD in Lairs. Nothing here is at stake — the bartender can't lose — so the
+	// health / sex / corruption / domination bars, the lives (cigars), the poppers
+	// stash and the floating per-enemy bars would all be reporting on a fight that
+	// isn't happening, over the art the mode exists to show. The showcase tally in
+	// LairsStats takes their place. endLairsMode() puts them all back.
+	hud.enabled = false;
+	enemyinfo.enabled = false;
+
+	lairsStats = new LairsStats();
+	overlays.push(lairsStats);
+
 	// Build and start the endless level (Start positions & adds the player).
 	level = BuildLairsLevel();
 	level.Start();
@@ -114,9 +136,100 @@ function startLairsMode()
 	GlobalMusic.play(0.5);
 
 	lairsDirector = new LairsDirector();
+	lairsDirector.Seed();   // populate the back plane now, while the transition still covers the screen
 
 	var lst = new LevelStartTransition();
 	lst.Show();
+};
+
+// Tear down a Lairs session: restore the HUD and drop the stats panel. Called from
+// resetGame(), which is where every exit from the mode funnels through (pause ->
+// Exit to Title). Safe to call when Lairs was never entered.
+function endLairsMode()
+{
+	lairsMode = false;
+	lairsDirector = null;
+
+	if (typeof(hud) !== "undefined" && hud !== null)
+		hud.enabled = true;
+	if (typeof(enemyinfo) !== "undefined" && enemyinfo !== null)
+		enemyinfo.enabled = true;
+
+	if (lairsStats !== null)
+	{
+		var i = overlays.indexOf(lairsStats);
+		if (i !== -1)
+			overlays.splice(i, 1);
+		lairsStats = null;
+	}
+};
+
+// ---- Showcase tally --------------------------------------------------------
+// The only thing on screen besides the show: how long this session has been running
+// and what the bartender has got up to in it. Lives on the overlays list (added in
+// startLairsMode, removed in endLairsMode), so it updates and draws with the HUD it
+// replaced — and, like the rest of the overlays, stops counting while a menu is up.
+function LairsStats()
+{
+	this.frames = 0;
+	this.kissed = 0;    // smoke-kisses landed
+	this.fucked = 0;    // sex scenes played out
+};
+
+LairsStats.prototype.CountKiss = function() { this.kissed += 1; };
+LairsStats.prototype.CountSex  = function() { this.fucked += 1; };
+
+LairsStats.prototype.Update = function()
+{
+	if (lairsMode)
+		this.frames += 1;
+};
+
+function LairsFormatTime(frames)
+{
+	var seconds = Math.floor(frames / fps);
+	var mins = Math.floor(seconds / 60);
+	var secs = seconds % 60;
+	return mins + ":" + (secs < 10 ? "0" : "") + secs;
+};
+
+LairsStats.prototype.Draw = function()
+{
+	if (!lairsMode)
+		return;
+
+	var rows = [["TIME",   LairsFormatTime(this.frames)],
+				["KISSED", String(this.kissed)],
+				["FUCKED", String(this.fucked)]];
+
+	// Laid out in render-canvas pixels, because that is the space sstext draws in
+	// (it scales its own 3x buffer to the display, so the text stays crisp). The
+	// backing panel goes through the normal 1920x1080 virtual transform instead, so
+	// convert with k — the two spaces differ by exactly 1080 / c.height.
+	var x = 9, y = 8, lineHeight = 11, width = 84;
+	var k = 1080.0 / c.height;
+
+	ctx.save();
+	var ratioTo1080p = c.height / 1080.0;
+	ctx.setTransform(ratioTo1080p, 0, 0, ratioTo1080p, 0, 0);
+	ctx.globalAlpha = 0.4;
+	ctx.fillStyle = "#12040f";
+	drawRoundRect((x - 5) * k, (y - 4) * k, (width + 10) * k,
+				  (rows.length * lineHeight + 6) * k, 5 * k, true, false);
+	ctx.globalAlpha = 1.0;
+	ctx.restore();
+
+	sstext.scale = 1.0;
+	sstext.alpha = 1.0;
+	sstext.textBaseline = "top";
+	sstext.fontSize = 9;
+	for (var i = 0; i < rows.length; i++)
+	{
+		sstext.textAlign = "left";
+		sstext.DrawTextWithShadow(rows[i][0], x, y + i * lineHeight, "#e9a8d4");
+		sstext.textAlign = "right";
+		sstext.DrawTextWithShadow(rows[i][1], x + width, y + i * lineHeight, "#FFF");
+	}
 };
 
 // ---- Endless level ---------------------------------------------------------
@@ -138,7 +251,7 @@ function BuildLairsLevel()
 	sky.parallax = 1;
 	sky.posX = 0;
 	sky.posY = 0;
-	sky.repX = 3;
+	sky.repX = 4;   // 4, not 3: enough tiles to span the widest supported aspect
 	sky.repY = 1;
 	sky.ReInit();
 	lv.background.push(sky);
@@ -206,24 +319,10 @@ LairsBartenderAI.prototype.GenerateNewAction = function()
 		return;
 	}
 
-	// No fresh target. If a Joe he already seduced is still finishing his corruption
-	// nearby, LINGER (idle in place) so he doesn't stroll off and outrun the climax
-	// (which would cull the fapping Joe mid-animation — he'd appear to vanish). Only
-	// once the stage is clear does he stroll on to meet the next spawn.
-	var list = level.entities.list;
-	for (var i = 0; i < list.length; i++)
-	{
-		var e = list[i];
-		if (e.isLairsJoe && !IsDeadOrDying(e.state) &&
-			(IsCorrupt(e.state) || IsCaptive(e.state)) &&
-			Math.abs(e.posX - o.posX) < 1400)
-		{
-			this.QueueAction(new LairsLingerAction(30));
-			return;
-		}
-	}
-
-	// Stage clear: keep the show moving — stroll to the right and re-evaluate soon.
+	// No fresh target: keep the show moving — stroll right and re-evaluate soon. He
+	// never halts for something the viewer can't see; every pause on stage is part of
+	// a seduction (the grab/kiss/sex itself, or the beat he spends watching the Joe he
+	// just corrupted finish — both live inside LairsSeduceAction).
 	this.QueueAction(new LairsStrollAction(45));
 };
 
@@ -252,24 +351,6 @@ LairsStrollAction.prototype.Update = function()
 
 LairsStrollAction.prototype.Complete = function() { this.ended = true; };
 
-// Linger: stand still (press nothing) for a beat so a just-corrupted Joe can finish
-// his climax right here before the bartender strolls on to the next spawn.
-function LairsLingerAction(frames)
-{
-	BasicAction.call(this);
-	this.framesToWait = frames;
-};
-
-LairsLingerAction.prototype.Update = function()
-{
-	// Deliberately no input — impliedKeyup lets the released keys settle him to idle.
-	this.timer += 1;
-	if (this.timer > this.framesToWait)
-		this.ended = true;
-};
-
-LairsLingerAction.prototype.Complete = function() { this.ended = true; };
-
 // Work a Joe: approach and grab. The Bartender's own grab logic decides the
 // outcome — grabbing a fresh Joe starts a Drag (we then press smoke for a
 // SmokeKiss that corrupts him), while grabbing a fapping *corrupt* Joe at full
@@ -278,8 +359,13 @@ LairsLingerAction.prototype.Complete = function() { this.ended = true; };
 // the kiss has corrupted the Joe we stay on him and grab again for the full sex
 // animation — the Bartender's grab does sex when he grabs a corrupt fuckable target
 // at full sex-meter (the director keeps the meter topped).
+// The action ends with an "admire" beat: he stands where he is, facing the Joe he
+// just corrupted, until that Joe's fap/orgasm has run out. That is the only time he
+// stops without an animation of his own playing, and the reason for it is right
+// there on screen next to him.
 //   0 approach, 1 grab, 2 smoke (kiss), 3 kiss finishing,
-//   4 wait for corruption, 5 approach for sex, 6 grab for sex, 7 sex finishing
+//   4 wait for corruption, 5 approach for sex, 6 grab for sex, 7 sex finishing,
+//   8 admire
 function LairsSeduceAction(target, doSex)
 {
 	BasicAction.call(this);
@@ -287,20 +373,26 @@ function LairsSeduceAction(target, doSex)
 	this.doSex = !!doSex;
 	this.phase = 0;
 	this.phaseTimer = 0;
+	this.lastOwnerState = -1;   // for the stats tally: spot the frame each action lands
+	this.countedSex = false;
 	// The grab hitbox reaches X 100..300 (Bartender.grabAttack SetBounds(100,-28,300,28)),
 	// but body collision stops the Bartender ~150px short of a target, so we must fire
 	// the grab from *within* that reach — never try to close nearer than collision allows,
 	// or he just shoves the Joe along forever.
 	this.grabRangeX = 260;   // fire the grab once the target is inside the grab hitbox
 	this.grabRangeY = 26;    // and roughly on the same Y plane (box half-height is 28)
-	this.timeout = 1100;     // hard safety cap covering the full kiss-then-sex combo
+	this.timeout = 1400;     // hard safety cap covering the full kiss-then-sex-then-admire run
 };
 
 // States that mean a finisher (kiss or sex) is committed and self-running.
 function LairsIsFinisherState(s)
 {
-	return s === States.SmokeKiss ||
-		   s === States.PrepareSexTop || s === States.BeforeSexTop ||
+	return s === States.SmokeKiss || LairsIsSexState(s);
+}
+
+function LairsIsSexState(s)
+{
+	return s === States.PrepareSexTop || s === States.BeforeSexTop ||
 		   s === States.CaptiveSexTop || s === States.AfterSexTop;
 }
 
@@ -311,6 +403,21 @@ LairsSeduceAction.prototype.Update = function()
 
 	var o = this.owner;
 	var t = this.target;
+
+	// Tally for the stats panel, on the frame the kiss or sex actually lands (the state
+	// is entered) rather than when we press the button — a grab that whiffs doesn't
+	// count. The sex sequence walks through several states, so it only counts once.
+	if (lairsStats !== null && o.state !== this.lastOwnerState)
+	{
+		if (o.state === States.SmokeKiss)
+			lairsStats.CountKiss();
+		else if (LairsIsSexState(o.state) && !this.countedSex)
+		{
+			this.countedSex = true;
+			lairsStats.CountSex();
+		}
+		this.lastOwnerState = o.state;
+	}
 
 	// Hard cap: never hang, even if a state machine gets into an odd spot.
 	if (this.timer > this.timeout)
@@ -373,7 +480,7 @@ LairsSeduceAction.prototype.Update = function()
 		if (o.state === States.Walk)
 		{
 			if (this.doSex) { this.phase = 4; this.phaseTimer = 0; }
-			else this.ended = true;
+			else { this.phase = 8; this.phaseTimer = 0; }
 		}
 	}
 	else if (this.phase === 4)          // wait for the Joe to finish corrupting (fappable)
@@ -396,9 +503,20 @@ LairsSeduceAction.prototype.Update = function()
 		else if (o.state === States.GrabFail || (o.state === States.Walk && this.phaseTimer > 25))
 		{ this.phase = 5; this.phaseTimer = 0; }
 	}
-	else                                // phase 7: sex finishing
+	else if (this.phase === 7)          // sex finishing
 	{
-		if (o.state === States.Walk) this.ended = true;
+		if (o.state === States.Walk) { this.phase = 8; this.phaseTimer = 0; }
+	}
+	else                                // phase 8: stay and watch him finish
+	{
+		// No movement input (impliedKeyup settles him to idle), just turn to face the
+		// Joe. He leaves the moment the Joe starts dying, or after the cap if the
+		// corruption fizzled out some other way.
+		o.facing = faceDir;
+		var stillGoing = (t !== null && !IsDeadOrDying(t.state) &&
+						  (this.phaseTimer < 30 || IsCorrupt(t.state)));   // grace frames: the corruption takes a moment to start
+		if (!stillGoing || this.phaseTimer > LAIRS_ADMIRE_FRAMES)
+			this.ended = true;
 	}
 };
 
@@ -428,12 +546,28 @@ LairsPopperAction.prototype.Complete = function() { this.ended = true; };
 function LairsDirector()
 {
 	this.spawnTimer = 45;         // first Joe arrives quickly
-	this.bgPairTimer = 120;       // first background couple a little after
 	this.bgPairs = [];            // active background couples (pairs of looping kiss effects)
 	this.kissAnimL = null;        // shared horny-kiss animation templates, grabbed lazily
 	this.kissAnimR = null;
-	this.bgCharTimer = 200;       // first corrupt showcase character a bit later still
 	this.bgChars = [];            // active permanently-corrupt back-plane characters
+
+	// Back-plane "frontiers": the world X up to which each kind of decoration has been
+	// staged. New pieces are always placed AT the frontier, which is kept ahead of the
+	// camera's right edge — so they are already standing there when the bartender walks
+	// up to them, rather than materializing in view.
+	this.bgPairFrontierX = 0;
+	this.bgCharFrontierX = 0;
+};
+
+// Dress the opening screen. Called from startLairsMode() while the LevelStartTransition
+// still covers everything, so the back plane is already populated when the curtain lifts
+// (the director itself doesn't tick until the transition is off the menu stack).
+LairsDirector.prototype.Seed = function()
+{
+	this.bgPairFrontierX = camera.boundingRect.xMin + 300;
+	this.bgCharFrontierX = camera.boundingRect.xMin + 200;
+	this.StageBackgroundPairs();
+	this.StageBackgroundChars();
 };
 
 LairsDirector.prototype.Update = function()
@@ -450,10 +584,10 @@ LairsDirector.prototype.Update = function()
 	poppers = maxPoppers;
 
 	// One pass over the entities to: count how many fresh enemies are still around
-	// (spawn gating), cull far-behind stragglers, and retire "spent" Joes. A seduced
-	// Joe gets recruit()ed and would then follow the bartender forever, so once it has
-	// had a few seconds to show its reaction we poof it away — keeping the frame
-	// focused on the current seduction instead of a growing cheering mob.
+	// (spawn gating), cull far-behind stragglers, and cut loose "spent" Joes. A seduced
+	// Joe gets recruit()ed and would then follow the bartender forever, so after a few
+	// seconds of showing its reaction we drop its AI and let the show walk away from it
+	// — keeping the frame on the current seduction instead of a growing cheering mob.
 	var freshCount = 0;
 	var otherCount = 0;
 	var list = level.entities.list;
@@ -497,31 +631,31 @@ LairsDirector.prototype.Update = function()
 		// A Joe we're actively grabbing/kissing/fucking must never be retired.
 		var busy = (e === player.captive) || IsCaptive(e.state);
 
-		if (e.alliance === 2 && !IsDeadOrDying(e.state) && !e.recruited)
+		if (e.alliance === 2 && !IsDeadOrDying(e.state) && !e.recruited && !IsCorrupt(e.state))
 		{
-			// Count every LIVE enemy Joe — fresh, being kissed, or still fapping toward
-			// orgasm. Holding the next spawn until the current one has fully finished and
-			// died keeps just one live Joe on stage at a time (LAIRS_TARGET_FRESH), so
-			// corrupt Joes never stack up. The bartender lingers beside each one until it's
-			// done rather than marching on (see LairsBartenderAI.GenerateNewAction).
+			// Count only Joes still waiting to be seduced (fresh, or mid-kiss). Once a Joe
+			// is corrupted he stops gating, so the next one is staged off-screen right away
+			// and is walking in by the time the bartender is done here — that's what keeps
+			// him moving forward instead of standing around waiting for a spawn.
 			freshCount += 1;
 		}
 		else if (e.recruited && !IsCorrupt(e.state) && !busy)
 		{
-			// A recruited ally would follow the bartender forever (it never falls
-			// behind on its own), so retire it after a short while. Corrupt Joes are
-			// deliberately NOT touched here — they run their own fap -> orgasm -> death
-			// animation and clean themselves up; poofing them early made them "vanish".
+			// A recruited ally follows the bartender forever, so it would never fall
+			// behind on its own. After a few seconds cut it loose: drop its AI so it
+			// stands where it is, the camera walks away from it, and the off-screen cull
+			// above collects it. (Nothing is poofed in view.) Corrupt Joes are deliberately
+			// NOT touched here — they run their own fap -> orgasm -> death animation.
 			if (typeof(e.lairsSpentTimer) !== "number")
 				e.lairsSpentTimer = LAIRS_SPENT_LIFESPAN;
 			else
 				e.lairsSpentTimer -= 1;
 
-			if (e.lairsSpentTimer <= 0)
+			if (e.lairsSpentTimer <= 0 && e.ai !== null)
 			{
-				LairsPoof(e);
-				level.entities.Remove(e);
-				i -= 1;
+				e.ai.Flush();
+				e.ai = null;
+				e.isPassThrough = true;
 			}
 		}
 	}
@@ -574,9 +708,10 @@ LairsDirector.prototype.UpdateBackgroundPairs = function()
 	for (var i = this.bgPairs.length - 1; i >= 0; i--)
 	{
 		var p = this.bgPairs[i];
-		// Off the left edge, or somehow already gone -> retire the couple.
+		// Off the left edge, or somehow already gone -> retire the couple. Nothing is
+		// ever retired while it could still be on screen.
 		if (p.left.state === States.Dead || p.right.state === States.Dead ||
-			p.left.posX < camera.boundingRect.xMin - 300)
+			p.left.posX < camera.boundingRect.xMin - LAIRS_BG_RETIRE_MARGIN)
 		{
 			p.left.Die();
 			p.right.Die();
@@ -584,32 +719,29 @@ LairsDirector.prototype.UpdateBackgroundPairs = function()
 		}
 	}
 
-	if (this.bgPairTimer > 0)
-		this.bgPairTimer -= 1;
-
-	if (this.bgPairTimer === 0 && this.bgPairs.length < LAIRS_MAX_BG_PAIRS)
-	{
-		this.SpawnBackgroundPair();
-		this.bgPairTimer = LAIRS_BG_PAIR_COOLDOWN;
-	}
+	this.StageBackgroundPairs();
 };
 
-// Pick a back-plane X inside the *visible* area, biased to the left or right flank so
-// the couple/character frames the star instead of covering him. Placing them on-screen
-// (rather than off the right edge) means they're seen even when the slow one-at-a-time
-// pacing keeps the bartender — and so the camera — nearly stationary. When the camera
-// does scroll, they drift with the world and off-screen ones are retired as before.
-function LairsBackPlaneX()
+// Advance the couple frontier: place couples along the back plane, spaced out, until
+// the staged span reaches past the right edge of the screen.
+LairsDirector.prototype.StageBackgroundPairs = function()
 {
-	var vis = camera.boundingRect.xMax - camera.boundingRect.xMin;
-	if (!(vis > 0))
-		vis = getVirtualScreenWidth();
-	var side = (Math.random() < 0.5) ? (0.10 + Math.random() * 0.24)    // left flank
-	                                 : (0.60 + Math.random() * 0.26);   // right flank
-	return camera.boundingRect.xMin + vis * side;
+	var limit = camera.boundingRect.xMax + LAIRS_BG_LOOKAHEAD;
+	var guard = 0;
+	while (this.bgPairFrontierX < limit && this.bgPairs.length < LAIRS_MAX_BG_PAIRS && guard++ < 6)
+	{
+		this.SpawnBackgroundPair(this.bgPairFrontierX);
+		this.bgPairFrontierX += LAIRS_BG_PAIR_GAP_MIN +
+			Math.random() * (LAIRS_BG_PAIR_GAP_MAX - LAIRS_BG_PAIR_GAP_MIN);
+	}
+
+	// If the live cap (rather than the lookahead) stopped the loop, the frontier can be
+	// left behind the camera — shove it back off-screen so the next couple still walks
+	// into frame instead of appearing in the middle of it.
+	this.bgPairFrontierX = Math.max(this.bgPairFrontierX, camera.boundingRect.xMax + 400);
 };
 
-LairsDirector.prototype.SpawnBackgroundPair = function()
+LairsDirector.prototype.SpawnBackgroundPair = function(px)
 {
 	// Grab the shared horny-kiss animation templates once (all Joe types use the
 	// joe1 kiss sprites) from a throwaway Joe.
@@ -626,7 +758,6 @@ LairsDirector.prototype.SpawnBackgroundPair = function()
 	if (!this.kissAnimL || !this.kissAnimR || typeof(EffectAnimation) !== "function")
 		return;
 
-	var px = LairsBackPlaneX();
 	var py = LAIRS_BG_PAIR_Y + (Math.random() * 60 - 30);
 
 	// Two looping kiss halves (left partner + right partner) placed at the same
@@ -660,22 +791,11 @@ LairsDirector.prototype.UpdateBackgroundChars = function()
 	{
 		var e = this.bgChars[i];
 
-		// Off the left edge (or somehow gone) -> retire quietly (no poof: it's off-screen).
+		// Off the left edge (or somehow gone) -> retire quietly. This is the ONLY way one
+		// of them leaves: they are never timed out or poofed while they could be in view.
 		if (typeof(e.posX) !== "number" || e.state === States.Dead ||
-			e.posX < camera.boundingRect.xMin - 300)
+			e.posX < camera.boundingRect.xMin - LAIRS_BG_RETIRE_MARGIN)
 		{
-			level.entities.Remove(e);
-			this.bgChars.splice(i, 1);
-			continue;
-		}
-
-		// Rotate the cast: after a while, poof this one out so a different character can
-		// take its place — otherwise, when the foreground pacing keeps the camera nearly
-		// still, the same two would stand there forever.
-		e.lairsBgLife -= 1;
-		if (e.lairsBgLife <= 0)
-		{
-			LairsPoof(e);
 			level.entities.Remove(e);
 			this.bgChars.splice(i, 1);
 			continue;
@@ -690,20 +810,28 @@ LairsDirector.prototype.UpdateBackgroundChars = function()
 			e.stateFrames = LAIRS_BG_CHAR_FAP_HOLD;
 	}
 
-	if (this.bgCharTimer > 0)
-		this.bgCharTimer -= 1;
-
-	if (this.bgCharTimer === 0 && this.bgChars.length < LAIRS_MAX_BG_CHARS)
-	{
-		this.SpawnBackgroundChar();
-		this.bgCharTimer = LAIRS_BG_CHAR_COOLDOWN;
-	}
+	this.StageBackgroundChars();
 };
 
-LairsDirector.prototype.SpawnBackgroundChar = function()
+// Advance the character frontier — same staging rule as the couples above.
+LairsDirector.prototype.StageBackgroundChars = function()
 {
-	// Pick a character not already on the back plane, so the concurrent pair are always
-	// two different members of the cast rather than duplicates.
+	var limit = camera.boundingRect.xMax + LAIRS_BG_LOOKAHEAD;
+	var guard = 0;
+	while (this.bgCharFrontierX < limit && this.bgChars.length < LAIRS_MAX_BG_CHARS && guard++ < 6)
+	{
+		this.SpawnBackgroundChar(this.bgCharFrontierX);
+		this.bgCharFrontierX += LAIRS_BG_CHAR_GAP_MIN +
+			Math.random() * (LAIRS_BG_CHAR_GAP_MAX - LAIRS_BG_CHAR_GAP_MIN);
+	}
+
+	this.bgCharFrontierX = Math.max(this.bgCharFrontierX, camera.boundingRect.xMax + 400);
+};
+
+LairsDirector.prototype.SpawnBackgroundChar = function(px)
+{
+	// Pick a character not already on the back plane, so the ones on stage together are
+	// always different members of the cast rather than duplicates.
 	var taken = {};
 	for (var t = 0; t < this.bgChars.length; t++)
 		taken[this.bgChars[t].constructor.name] = true;
@@ -722,9 +850,7 @@ LairsDirector.prototype.SpawnBackgroundChar = function()
 
 	var e = new MyClass();
 	e.isLairsBgChar = true;   // exempt from the foreground roster counting and the far-behind cull
-	e.lairsBgLife = LAIRS_BG_CHAR_LIFESPAN + Math.floor(Math.random() * 300);   // jitter so the two don't rotate in lockstep
 
-	var px = LairsBackPlaneX();
 	var py = LAIRS_BG_CHAR_Y + (Math.random() * 40 - 20);
 
 	if ("ReInit" in e) e.ReInit(level);
@@ -745,7 +871,6 @@ LairsDirector.prototype.SpawnBackgroundChar = function()
 
 	level.entities.AddEntity(e);
 	this.bgChars.push(e);
-	LairsPoof(e);   // a puff of smoke covers him appearing on-screen (and rotating out)
 };
 
 // Small smoke poof to cover a Joe leaving the show (mirrors SpawnEntityTransitionPuff).

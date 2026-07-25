@@ -117,6 +117,7 @@ var menuStack=[];
 // Bartender is AI-driven and lairsDirector spawns/stages the showcase enemies.
 var lairsMode = false;
 var lairsDirector = null;
+var lairsStats = null;
 
 // Define global acceleration due to gravity.
 var gravity = 2.4;
@@ -293,9 +294,9 @@ function StrangeFlesh()
 
 function resetGame()
 {
-	// Leaving any Lairs session behind (e.g. via pause -> Exit to Title).
-	lairsMode = false;
-	lairsDirector = null;
+	// Leaving any Lairs session behind (e.g. via pause -> Exit to Title): also puts the
+	// HUD back and drops the showcase stats panel (see endLairsMode in Lairs.js).
+	endLairsMode();
 
 	// Create the player
 	player = new Bartender();
