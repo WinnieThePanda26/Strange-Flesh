@@ -38,7 +38,6 @@ var LAIRS_MAX_TOTAL = 7;                         // hard backstop on total non-p
 var LAIRS_SPENT_LIFESPAN = 300;                  // frames a recruited ally follows before he's left behind (~5s); corrupt Joes self-die instead
 var LAIRS_SPAWN_COOLDOWN = 80;                   // min frames between spawns; short, since the one-at-a-time gate above sets the real pace
 var LAIRS_SEX_CHANCE = 0.4;                      // chance a kiss escalates all the way to full sex
-var LAIRS_DRUNK_CHANCE = 0.12;                   // per-decision chance to hit a popper and go drunk
 var LAIRS_FAP_SPEEDUP = 2;                        // extra stateframes/frame added to a fapping Joe so his
                                                  // corruption reaches orgasm briskly (~4s) instead of ~12s
 var LAIRS_ADMIRE_FRAMES = 150;                    // max frames the bartender stays to watch a Joe he just seduced finish
@@ -117,6 +116,18 @@ function startLairsMode()
 	lairsStats = new LairsStats();
 	overlays.push(lairsStats);
 
+	// The popper trainer (LairsTrainer.js), if it's switched on in the Lairs menu.
+	// With it off this is plain Lairs and the bartender never touches a popper.
+	if (settings.lairsTrainer === 1)
+	{
+		// A longer hold is meant to leave him drunk for longer, which the engine's
+		// 2-minute ceiling is too low to show — long hits would all saturate at it.
+		player.maxDrunkTimer = LAIRS_TRAINER_MAX_DRUNK * fps;
+
+		lairsTrainer = new LairsTrainer();
+		overlays.push(lairsTrainer);
+	}
+
 	// Build and start the endless level (Start positions & adds the player).
 	level = BuildLairsLevel();
 	level.Start();
@@ -161,6 +172,14 @@ function endLairsMode()
 		if (i !== -1)
 			overlays.splice(i, 1);
 		lairsStats = null;
+	}
+
+	if (lairsTrainer !== null)
+	{
+		var t = overlays.indexOf(lairsTrainer);
+		if (t !== -1)
+			overlays.splice(t, 1);
+		lairsTrainer = null;
 	}
 };
 
@@ -296,11 +315,12 @@ LairsBartenderAI.prototype.GenerateNewAction = function()
 {
 	var o = this.owner;
 
-	// Occasionally hit a popper and get drunk — the smoke-kiss and sex animations
-	// have their own drunk variants, so this adds "when drunk" versions for free.
-	if (o.drunkTimer <= 0 && poppers > 0 && Math.random() < LAIRS_DRUNK_CHANCE)
+	// A trainer hit is being called or is in progress: start nothing new. He stands by
+	// so he's free to take it the moment it lands, and doesn't wander off mid-hold.
+	// (Poppers are ONLY ever taken on a scheduled hit — see LairsTrainer.TakeTheHit.)
+	if (lairsTrainer !== null && lairsTrainer.BlocksNewActions())
 	{
-		this.QueueAction(new LairsPopperAction());
+		this.QueueAction(new LairsStandbyAction());
 		return;
 	}
 
@@ -350,6 +370,25 @@ LairsStrollAction.prototype.Update = function()
 };
 
 LairsStrollAction.prototype.Complete = function() { this.ended = true; };
+
+// Stand by: hold still for the duration of a trainer hit — the countdown, the hit
+// itself and the hold — so the moment is his and yours and nothing else moves.
+function LairsStandbyAction()
+{
+	BasicAction.call(this);
+	this.timeout = 900;   // never strand him if the trainer goes away mid-hold
+};
+
+LairsStandbyAction.prototype.Update = function()
+{
+	// Deliberately no input — impliedKeyup settles him to idle (the drunk sway, once
+	// he's had a hit).
+	this.timer += 1;
+	if (lairsTrainer === null || !lairsTrainer.BlocksNewActions() || this.timer > this.timeout)
+		this.ended = true;
+};
+
+LairsStandbyAction.prototype.Complete = function() { this.ended = true; };
 
 // Work a Joe: approach and grab. The Bartender's own grab logic decides the
 // outcome — grabbing a fresh Joe starts a Drag (we then press smoke for a
@@ -523,18 +562,29 @@ LairsSeduceAction.prototype.Update = function()
 LairsSeduceAction.prototype.Complete = function() { this.ended = true; };
 
 // Popper: hit the poppers button to go drunk. Poppers only register from Walk
-// (they trigger the Sniff gesture, after which drunkTimer ramps up).
+// (they trigger the Sniff gesture, after which drunkTimer ramps up). Queued only by
+// the trainer, on a called hit — he never takes one on his own.
 function LairsPopperAction()
 {
 	BasicAction.call(this);
-	this.timeout = 60;
+	this.timeout = 600;   // generous: if a hit had to be forced into a scene he was already
+	                      // committed to, he still takes it as soon as that scene lets go
 };
 
 LairsPopperAction.prototype.Update = function()
 {
 	this.timer += 1;
-	this.owner.controller.poppersKeyDown();
-	if (this.owner.state === States.Sniff || this.owner.drunkTimer > 0 || this.timer > this.timeout)
+
+	// Tap, don't hold. poppersActivate() is only true on the frame of a *fresh* keydown,
+	// and impliedKeyup won't release a button that gets re-pressed every frame — so
+	// holding it offers the hit exactly once, and if he happens to be mid-kiss at that
+	// instant the hit is simply lost. Tapping keeps offering it until he can take it.
+	if (this.timer % 4 === 1)
+		this.owner.controller.poppersKeyDown();
+
+	// Done once the gesture is underway. Deliberately NOT keyed off drunkTimer: he is
+	// usually still drunk from the last hit, and this has to land every time it's called.
+	if (this.owner.state === States.Sniff || this.timer > this.timeout)
 		this.ended = true;
 };
 

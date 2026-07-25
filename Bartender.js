@@ -208,7 +208,10 @@ function Bartender()
 	this.allowIdle = true;
 	this.idleCounter = 0;
 	this.drunkTimer = 0;
-	
+	// How much drunkenness one sniff is worth. Fixed in the game proper; the Lairs
+	// popper trainer sets it per hit, so a longer hold leaves him drunk for longer.
+	this.sniffDrunkSeconds = 15;
+
 	// Collision
 	this.zHeight = this.scale * 110;
 	this.collisionRadius = this.scale * 10;
@@ -1665,7 +1668,7 @@ Bartender.prototype.UpdateState = function()
 		// back to Walk, where drunkTimer > 0 makes the idle become the drunk sway.
 		if (this.stateFrames >= 42)
 		{
-			this.drunkTimer = Math.min(this.drunkTimer + 15 * fps, this.maxDrunkTimer);
+			this.drunkTimer = Math.min(this.drunkTimer + this.sniffDrunkSeconds * fps, this.maxDrunkTimer);
 			this.ChangeState(States.Walk);
 		}
 	}

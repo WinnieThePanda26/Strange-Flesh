@@ -96,8 +96,8 @@ function MainMenu()
 						{
 							// Self-running showcase mode (see Lairs.js). Always available
 							// so any player can watch the art without beating the game.
-							DismissAllMenus();
-							startLairsMode();
+							// Opens its config screen, which starts the session itself.
+							ShowLairsMenu();
 						}
 					},
 					{ "element":"button", "label":"Settings", "onClick":function()
