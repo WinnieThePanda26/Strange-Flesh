@@ -241,6 +241,7 @@ GlobalResourceLoader.AddImageResource("level0/grab_sign","images/level0/grab_sig
 GlobalResourceLoader.AddImageResource("level0/jab_sign","images/level0/jab_sign.png");
 GlobalResourceLoader.AddImageResource("level0/kiss_sign","images/level0/kiss_sign.png");
 GlobalResourceLoader.AddImageResource("level0/parallax1","images/level0/parallax1.png");
+GlobalResourceLoader.AddImageResource("level0/poppers_sign","new_images/level0_poppers_sign.png");
 GlobalResourceLoader.AddImageResource("level0/parallax2","images/level0/parallax2.png");
 GlobalResourceLoader.AddImageResource("level0/parallax3","images/level0/parallax3.png");
 GlobalResourceLoader.AddImageResource("level0/repeat_bg","images/level0/repeat_bg.png");
@@ -525,6 +526,7 @@ dancingjoes.inheritFacing = 1;
 									"level0/parallax1",
 									"level0/parallax2",
 									"level0/parallax3",
+									"level0/poppers_sign",
 									"level0/repeat_bg",
 									"level0/sex_sign",
 									"level0/skybox",
