@@ -15,11 +15,7 @@
  *   node playtest.js --state mainmenu --keys Enter,ArrowDown,ArrowDown --shot /tmp/sf/nav.png
  */
 
-const path = require('path');
-const puppeteer = require(path.join(__dirname, 'node_modules', 'puppeteer-core'));
-
-const DEFAULT_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const { sleep, launch, reachReady } = require('./common');
 
 function parseArgs(argv) {
   const a = {
@@ -46,32 +42,6 @@ function parseArgs(argv) {
     else if (t === '--wait') a.wait = +argv[++i];
   }
   return a;
-}
-
-async function reachReady(page) {
-  // Wait for assets to finish downloading
-  for (let i = 0; i < 100; i++) {
-    const pct = await page.evaluate(() => {
-      try { return GlobalResourceLoader.loadPercentage; } catch (e) { return 0; }
-    });
-    if (pct > 99) break;
-    await sleep(500);
-  }
-  // Unlock WebAudio: a trusted click + clear the loader's lock flag
-  await page.mouse.click(Math.floor(page.viewport().width / 2),
-                         Math.floor(page.viewport().height / 2));
-  await page.evaluate(() => {
-    try { if (typeof audioContext !== 'undefined') audioContext.resume(); } catch (e) {}
-    try { GlobalResourceLoader.webAudioLocked = false; } catch (e) {}
-  });
-  for (let i = 0; i < 40; i++) {
-    const ready = await page.evaluate(() => {
-      try { return GlobalResourceLoader.AllReady(); } catch (e) { return false; }
-    });
-    if (ready) return true;
-    await sleep(400);
-  }
-  return false;
 }
 
 async function forceState(page, state, widescreen) {
@@ -143,12 +113,7 @@ async function forceGame(page, hudsize) {
   const a = parseArgs(process.argv);
   require('fs').mkdirSync(require('path').dirname(a.shot), { recursive: true });
 
-  const browser = await puppeteer.launch({
-    executablePath: process.env.CHROME_PATH || DEFAULT_CHROME,
-    headless: 'new',
-    args: ['--autoplay-policy=no-user-gesture-required', '--no-sandbox', '--mute-audio'],
-    defaultViewport: { width: a.width, height: a.height, deviceScaleFactor: 1 },
-  });
+  const browser = await launch(a.width, a.height);
   try {
     const page = await browser.newPage();
     page.on('pageerror', (e) => console.log('PAGEERROR:', e.message));
