@@ -80,9 +80,6 @@ function installAudioTap() {
 }
 
 async function startLairs(page, a) {
-  // Give the title music a moment to queue its first segment: Music.stop() (called by
-  // startLairsMode) crashes if it runs between play() and that first queue.
-  await sleep(1000);
   await page.evaluate((a) => {
     settings.lairsTrainer = a.trainer ? 1 : 0;
     if (a.scenario === 'lairs-poppers-sex') {
@@ -93,9 +90,6 @@ async function startLairs(page, a) {
       settings.lairsLongChance = 0;
       LAIRS_SEX_CHANCE = 0;
       LAIRS_DRUNK_PER_HOLD_SECOND = 30;
-      // Joe3's corruption-transform outlasts the seduce action's 240-frame wait for
-      // Corrupt, so a kissed Joe3 never escalates to sex; only spawn Joes that do.
-      LAIRS_ENEMY_POOL = ['Joe1', 'Joe2'];
     }
     startLairsMode();
   }, a);
