@@ -74,7 +74,11 @@ Music.prototype.stop = function(fadeOut, delay)
 				this.destination.gain.setValueAtTime(this.volume, fadeTime);
 				this.destination.gain.exponentialRampToValueAtTime(0.001, stopTime);
 			}
-			this.lastQueuedTrack.source.stop(stopTime);
+			// play() marks the music playing straight away, but Update() queues nothing
+			// until the loader is AllReady (e.g. while a level's assets are still loading),
+			// so there may be no segment to stop yet.
+			if (this.lastQueuedTrack !== null)
+				this.lastQueuedTrack.source.stop(stopTime);
 			this.lastQueuedTrack = null;
 			this.destination = null;
 		}
