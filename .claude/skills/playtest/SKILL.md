@@ -91,11 +91,11 @@ Scenarios:
 
 - `lairs-poppers-sex` *(default)* — scripted Lairs scene: a popper hit is called
   ~0.5s in, the bartender sniffs and goes drunk, and the next seduction escalates
-  kiss → sex. Stops `--tail` seconds (default 2.5) after the sex ends; typically
-  ~28s. Recording-only tweaks, applied in the page (nothing in the repo changes):
-  short holds, no long hits, sex held off until the hit lands then forced on, one
-  hit lasts ~60s drunk, and only Joe1/Joe2 spawn (Joe3's corruption transform
-  outlasts Lairs' wait, so a kissed Joe3 never escalates).
+  kiss → sex. Stops `--tail` seconds (default 2.5) after the sex ends; ~28s with
+  a Joe1/Joe2, ~36s with a Joe3 (his corruption transform alone runs 7s).
+  Recording-only tweaks, applied in the page (nothing in the repo changes): short
+  holds, no long hits, sex held off until the hit lands then forced on, and one
+  hit lasts ~60s drunk.
 - `lairs` — plain Lairs for `--duration` seconds (trainer on; `--no-trainer` off).
 - `none` — record whatever is up after load for `--duration`; set it up with `--eval`.
 
@@ -122,8 +122,7 @@ wrapped so anything routed to `audioContext.destination` (the music bus, each
 `AudioResource` gain, direct sources) is also routed into a
 `MediaStreamDestination`, whose track joins the canvas stream in one
 `MediaRecorder`. `--mute-audio` only silences the speakers, not the tap. No ffmpeg
-needed. Startup waits ~1s after load before entering Lairs: `Music.stop()` crashes
-if it runs between the title music's `play()` and its first queued segment.
+needed.
 
 ## Gotchas / how it works
 
