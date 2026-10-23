@@ -438,7 +438,8 @@ function LairsSeduceAction(target, doSex)
 	// or he just shoves the Joe along forever.
 	this.grabRangeX = 260;   // fire the grab once the target is inside the grab hitbox
 	this.grabRangeY = 26;    // and roughly on the same Y plane (box half-height is 28)
-	this.timeout = 1400;     // hard safety cap covering the full kiss-then-sex-then-admire run
+	this.timeout = 1800;     // hard safety cap covering the full kiss-then-sex-then-admire run,
+	                         // including Joe3's 7s corruption transform in the middle of it
 };
 
 // States that mean a finisher (kiss or sex) is committed and self-running.
@@ -544,6 +545,8 @@ LairsSeduceAction.prototype.Update = function()
 	{
 		if (t.state === States.Corrupt || t.state === States.PreCorrupt)
 		{ this.phase = 5; this.phaseTimer = 0; }
+		else if (t.state === States.CorruptionTransform)
+			this.phaseTimer = 0;   // still getting there: Joe3's transform alone runs 7s (this.timeout caps it)
 		else if (this.phaseTimer > 240) this.ended = true;   // never got there — move on
 	}
 	else if (this.phase === 5)          // approach the fapping Joe for sex
