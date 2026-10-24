@@ -85,6 +85,9 @@ var debugSpawnerSelection = 0;
 // Controller object
 var controller = null;
 
+// On-screen touch controls (see TouchControls.js)
+var touchControls = null;
+
 // Engine stuff
 var fps = 60;
 var measuredFps = 0;
@@ -172,6 +175,7 @@ include("MatrixTransformation2D.js");
 include("CanvasCamera.js");
 include("Controller.js");
 include("PlayerInputController.js");
+include("TouchControls.js");
 include("Combat.js");
 include("Animation.js");
 include("EffectAnimation.js");
@@ -241,7 +245,10 @@ function StrangeFlesh()
 
     // Load the settings
 	loadSettings();
-	
+
+	// On-screen D-pad and buttons for phones/tablets; needs controller + settings
+	touchControls = new TouchControls();
+
 	// Setup a timer to update the canvas on set intervals
 	var timerInterval = (1/fps)*1000;
 	updateTimer = setInterval(tick,timerInterval);
@@ -479,6 +486,7 @@ function loadSettings()
 						"enableRetina" : false,
 						"widescreenMode" : 0,
 						"hudSize" : 1,
+						"touchControls" : 0,      // 0 auto, 1 always on, 2 off (see TouchControls.js)
 						"debugMode" : false,
 						"musicLevelGameplay" : 0.5,
 						"baseSFXBoost" : 1.0,
@@ -1348,7 +1356,9 @@ function updateAll()
 	}
 	
 	GlobalMusic.Update();
-	
+
+	touchControls.Update();
+
 	if (menuStack.length > 0)
 	{
 		menuStack[menuStack.length-1].Update();
