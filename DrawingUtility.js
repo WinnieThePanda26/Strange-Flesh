@@ -146,20 +146,6 @@ function mirrorImage(image, destImage)
 	destImage.src = tcan.toDataURL();
 };
 
-function mirrorCanvas(image)
-{
-	if (image === null)
-		return;
-	var tcan = document.createElement("canvas");
-	var tctx = tcan.getContext("2d");
-	tcan.width = image.width;
-	tcan.height = image.height;
-	tctx.translate(image.width, 0);
-	tctx.scale(-1, 1);
-	tctx.drawImage(image, 0, 0, image.width, image.height);
-	return tcan;
-};
-
 function drawRoundRect(x, y, width, height, radius, fill, stroke) 
 {
   if (typeof stroke == "undefined" ) 

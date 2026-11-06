@@ -19,6 +19,7 @@ function Music()
 	this.muteVolume = 1;
 	this.muted = false;
 	this.playStartDelay = 0;
+	this.playRequestTime = 0;
 	this.destination = null;
 	this.lastQueuedTrack = null;
 	this.tracks = {};
@@ -38,6 +39,8 @@ Music.prototype.play = function(delay, fadeIn)
 		this.destination.connect(audioContext.destination);
 		
 		this.playStartDelay = delay;
+		this.playRequestTime = audioContext.currentTime;
+		this.tracks[this.selectedTrack].Load();
 		
 		var startTime = audioContext.currentTime + delay;
 		var stopTime = startTime + fadeIn;
@@ -109,6 +112,20 @@ Music.prototype.setTrack = function(trackName)
 	//{
 		this.selectedTrack = trackName;
 	//}
+	
+	if (!this.tracks.hasOwnProperty(trackName))
+		return;
+	
+	// Start loading right away so the track is ready by the time it's played, and free
+	// every other track. Anything still sounding (a fade-out, say) is safe: its source
+	// node keeps its own reference to the buffer until it stops.
+	var keep = this.tracks[trackName].GetSounds();
+	for (var name in this.tracks)
+	{
+		if (this.tracks.hasOwnProperty(name) && name !== trackName)
+			this.tracks[name].Unload(keep);
+	}
+	this.tracks[trackName].Load();
 };
 
 Music.prototype.setVolume = function(volume, delay)
@@ -169,8 +186,36 @@ Music.prototype.Update = function()
 		// If there is no lastQueuedTrack or if the lastQueuedTrack is within 100ms of playback ending...
 		if (this.lastQueuedTrack === null || audioContext.currentTime > (this.lastQueuedTrack.finishTime - musicQueueTime))
 		{
+			var track = this.tracks[this.selectedTrack];
+			
+			// The track may still be loading. The game carries on regardless and the music
+			// comes in when it's ready; if it can't load at all, go without it.
+			if (track.HasLoadError())
+			{
+				this.playing = false;
+				this.destination = null;
+				this.lastQueuedTrack = null;
+				return;
+			}
+			if (!track.IsReady())
+				return;
+			
+			var now = audioContext.currentTime;
+			var startDelay = this.playStartDelay;
+			if (this.lastQueuedTrack === null)
+			{
+				// Time spent loading comes out of the delay that was asked for
+				if (startDelay > 0)
+					startDelay = Math.max(0, startDelay - (now - this.playRequestTime));
+			}
+			else if (this.lastQueuedTrack.finishTime < now)
+			{
+				// Picking up late: time the next segment from when it really starts
+				this.lastQueuedTrack.finishTime = now;
+			}
+			
 			// Ask the currently selected track to cue up its next segment
-			this.lastQueuedTrack = this.tracks[this.selectedTrack].QueueNext(this.lastQueuedTrack,this.playStartDelay, this);
+			this.lastQueuedTrack = track.QueueNext(this.lastQueuedTrack, startDelay, this);
 			
 			// If nothing queues, come to a graceful stop
 			if (this.lastQueuedTrack == null)
@@ -203,6 +248,72 @@ function MusicTrack(name)
 	this.segments = [];
 	this.firstSegment = null;
 	this.isAlternate = false;
+};
+
+// Every sound this track can play: its segments in order plus their pause alternates
+MusicTrack.prototype.GetSounds = function()
+{
+	var sounds = [];
+	var visited = [];
+	var pending = [this.firstSegment];
+	
+	while (pending.length > 0)
+	{
+		var segment = pending.pop();
+		if (segment === null || visited.indexOf(segment) !== -1)
+			continue;
+		
+		visited.push(segment);
+		if (sounds.indexOf(segment.sound) === -1)
+			sounds.push(segment.sound);
+		pending.push(segment.nextSegment);
+		pending.push(segment.alternateSegment);
+	}
+	
+	return sounds;
+};
+
+MusicTrack.prototype.Load = function()
+{
+	var sounds = this.GetSounds();
+	for (var i = 0; i < sounds.length; i++)
+	{
+		if (sounds[i].deferred && (sounds[i].error || !sounds[i].loaded))
+			sounds[i].load();
+	}
+};
+
+// Free this track's sounds, except any in keep (the track taking over may share them)
+MusicTrack.prototype.Unload = function(keep)
+{
+	var sounds = this.GetSounds();
+	for (var i = 0; i < sounds.length; i++)
+	{
+		if (sounds[i].deferred && keep.indexOf(sounds[i]) === -1)
+			sounds[i].unload();
+	}
+};
+
+MusicTrack.prototype.IsReady = function()
+{
+	var sounds = this.GetSounds();
+	for (var i = 0; i < sounds.length; i++)
+	{
+		if (!sounds[i].isReady())
+			return false;
+	}
+	return true;
+};
+
+MusicTrack.prototype.HasLoadError = function()
+{
+	var sounds = this.GetSounds();
+	for (var i = 0; i < sounds.length; i++)
+	{
+		if (sounds[i].error)
+			return true;
+	}
+	return false;
 };
 
 MusicTrack.prototype.SpliceSegment = function(lastQueuedTrack, newTrack, newSegment, music)
@@ -245,7 +356,8 @@ MusicTrack.prototype.SpliceSegment = function(lastQueuedTrack, newTrack, newSegm
 MusicTrack.prototype.SetAlternate = function(lastQueuedTrack, music)
 {
 	// If this track is not in alternate mode and it's playing right now...
-	if (!this.isAlternate && lastQueuedTrack !== null && lastQueuedTrack.segment.alternateSegment !== null)
+	// (Its sounds can already be freed if another track was selected while it plays out.)
+	if (!this.isAlternate && lastQueuedTrack !== null && lastQueuedTrack.segment.alternateSegment !== null && lastQueuedTrack.segment.alternateSegment.sound.isReady())
 	{
 		var spliceTime = audioContext.currentTime + 0.1;
 		
@@ -289,7 +401,7 @@ MusicTrack.prototype.SetAlternate = function(lastQueuedTrack, music)
 MusicTrack.prototype.ClearAlternate = function(lastQueuedTrack, music)
 {
 	// If this track is not in alternate mode and it's playing right now...
-	if (this.isAlternate && lastQueuedTrack !== null)
+	if (this.isAlternate && lastQueuedTrack !== null && lastQueuedTrack.segment.sound.isReady())
 	{
 		var spliceTime = audioContext.currentTime + 0.1;
 		

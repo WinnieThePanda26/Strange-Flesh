@@ -44,7 +44,6 @@ function ImageResource(key, src)
 	this.errorMessage = null;
 	
 	this.image = document.createElement("canvas");
-	this.flippedImage = document.createElement("canvas");
 	
 	this.domImage = new Image()
 	this.domImage.setAttribute('crossOrigin','anonymous');
@@ -87,7 +86,7 @@ ImageResource.prototype.onImageLoad = function()
 
 ImageResource.prototype.GenerateSprites = function()
 {
-	printImageToCanvases(this.domImage, this.image, this.flippedImage);
+	printImageToCanvas(this.domImage, this.image);
 	this.domImage = null;
 	if (this.infoSrc === null)
 	{
@@ -102,7 +101,7 @@ ImageResource.prototype.GenerateSprites = function()
 				    };
 				    
 		var sprite = GlobalResourceLoader.GetSprite(this.key);
-		sprite.Init(this.image, this.flippedImage, info);
+		sprite.Init(this.image, info);
 	}
 	else
 	{
@@ -110,25 +109,28 @@ ImageResource.prototype.GenerateSprites = function()
 		for (var i=0; i < this.info.frames.length; i++)
 		{
 			var sprite = GlobalResourceLoader.GetSprite(this.info.frames[i].name);
-			sprite.Init(this.image, this.flippedImage, this.info.frames[i]);
+			sprite.Init(this.image, this.info.frames[i]);
 		}
 	}
 };
 
-function printImageToCanvases(domImage, canvas, flippedCanvas)
+function printImageToCanvas(domImage, canvas)
 {
-	// Print the sprite and the flipped sprite to the appropriate canvases
 	canvas.width = domImage.width;
 	canvas.height = domImage.height;
 	var imageCtx = canvas.getContext("2d");
 	imageCtx.drawImage(domImage, 0, 0);
-		
-	flippedCanvas.width = domImage.width;
-	flippedCanvas.height = domImage.height;
-	var flippedCtx = flippedCanvas.getContext("2d");
-	flippedCtx.translate(domImage.width, 0);
-	flippedCtx.scale(-1, 1);
-	flippedCtx.drawImage(domImage, 0, 0);
+};
+
+// Draw part of an image mirrored left-to-right into the same destination rectangle a
+// mirrored copy of it would fill. Sheets aren't stored flipped: a second canvas for every
+// image doubled the game's sprite memory, which is enough to crash a phone browser.
+// Two scales rather than save/restore, since this runs for most sprites on screen.
+function drawImageFlipped(image, sx, sy, swidth, sheight, dx, dy, dwidth, dheight)
+{
+	ctx.scale(-1, 1);
+	ctx.drawImage(image, sx, sy, swidth, sheight, -dx - dwidth, dy, dwidth, dheight);
+	ctx.scale(-1, 1);
 };
 
 ImageResource.prototype.onImageError = function()
@@ -158,7 +160,6 @@ ImageResource.prototype.unload = function()
 {
 	this.domImage = null;
 	this.image = null;
-	this.flippedImage = null;
 	this.loading = false;
 	this.loaded = false;
 	this.error = false;
@@ -184,11 +185,10 @@ function Sprite()
 	this.height = 0;
 }
 
-Sprite.prototype.Init = function(sourceImage, flippedSourceImage, info)
+Sprite.prototype.Init = function(sourceImage, info)
 {
 	this.inited = true;
 	this.sourceImage = sourceImage;
-	this.flippedSourceImage = flippedSourceImage;
 	this.info = info;
 	this.width = this.info.width;
 	this.height = this.info.height;
@@ -202,7 +202,6 @@ Sprite.prototype.Clone = function()
 	
 	clonedSprite.inited = true;
 	clonedSprite.sourceImage = cloneCanvas(this.sourceImage);
-	clonedSprite.flippedSourceImage = cloneCanvas(this.flippedSourceImage);
 	clonedSprite.info = {	'name': this.info.name,
 							'width': this.info.width, 
 							'height': this.info.height,
@@ -309,7 +308,7 @@ Sprite.prototype.DrawSprite = function(x, y, flipped)
 		if (typeof(flipped)==='undefined' || !flipped)
 			ctx.drawImage(this.sourceImage, this.info.originX, this.info.originY, this.info.width, this.info.height, -this.info.centerX + x, -this.info.centerY + y, this.info.width, this.info.height);
 		else
-			ctx.drawImage(this.flippedSourceImage, this.flippedSourceImage.width - this.info.originX - this.info.width, this.info.originY, this.info.width, this.info.height, -(this.info.width - this.info.centerX) + x, -this.info.centerY + y, this.info.width, this.info.height);
+			drawImageFlipped(this.sourceImage, this.info.originX, this.info.originY, this.info.width, this.info.height, -(this.info.width - this.info.centerX) + x, -this.info.centerY + y, this.info.width, this.info.height);
 	}
 }
 
@@ -323,7 +322,7 @@ Sprite.prototype.DrawSprite3x = function(x, y, flipped)
 		if (typeof(flipped)==='undefined' || !flipped)
 			ctx.drawImage(this.sourceImage, this.info.originX, this.info.originY, this.info.width, this.info.height, -this.info.centerX * 3.0 + x, -this.info.centerY * 3.0 + y, this.info.width * 3.0, this.info.height * 3.0);
 		else
-			ctx.drawImage(this.flippedSourceImage, this.flippedSourceImage.width - this.info.originX - this.info.width, this.info.originY, this.info.width, this.info.height, -(this.info.width - this.info.centerX) * 3.0 + x, -this.info.centerY * 3.0 + y, this.info.width * 3.0, this.info.height * 3.0);
+			drawImageFlipped(this.sourceImage, this.info.originX, this.info.originY, this.info.width, this.info.height, -(this.info.width - this.info.centerX) * 3.0 + x, -this.info.centerY * 3.0 + y, this.info.width * 3.0, this.info.height * 3.0);
 	}
 }
 
@@ -365,7 +364,7 @@ Sprite.prototype.Draw = function(x, y, width, height, dx, dy, dwidth, dheight, f
 		if (typeof(flipped)==='undefined' || !flipped)
 			ctx.drawImage(this.sourceImage, x + this.info.originX, y + this.info.originY, width, height, dx, dy, dwidth, dheight);
 		else
-			ctx.drawImage(this.flippedSourceImage, x + (this.flippedSourceImage.width - this.info.originX - this.info.width), y + this.info.originY, width, height, dx, dy, dwidth, dheight);
+			drawImageFlipped(this.sourceImage, this.info.originX + this.info.width - x - width, y + this.info.originY, width, height, dx, dy, dwidth, dheight);
 	}
 }
 
@@ -447,6 +446,8 @@ function AudioResource(key, src, samples)
 	
 	this.key = key;
 	this.src = src;
+	this.deferred = false;       // music: loaded by Music when its track is selected, not at startup
+	this.loadGeneration = 0;     // bumped by unload() so a decode still in flight gets discarded
 	this.lastPlayFinishTime = -1;
 	this.allowOverlap = false;
 	// Play() copies this onto every buffer source it creates. It is shared by every
@@ -484,7 +485,7 @@ AudioResource.unmute = function()
 
 AudioResource.prototype.load = function()
 {
-	if (!this.loading)
+	if (!this.loading || this.error)
 	{
 		
 		this.loaded = false;
@@ -513,7 +514,10 @@ AudioResource.prototype.load = function()
 AudioResource.prototype.onSoundLoad = function()
 {
 	var ar = this;
-	audioContext.decodeAudioData(this.data, function(buffer) {ar.onSoundDecode(buffer);},  function(error) {ar.onSoundDecodeError(error)});
+	var generation = this.loadGeneration;
+	audioContext.decodeAudioData(this.data,
+		function(buffer) { if (generation === ar.loadGeneration) ar.onSoundDecode(buffer); },
+		function(error) { if (generation === ar.loadGeneration) ar.onSoundDecodeError(error); });
 };
 
 AudioResource.prototype.onSoundLoadError = function()
@@ -598,6 +602,9 @@ AudioResource.prototype.onSoundDecodeError = function(error)
 
 AudioResource.prototype.unload = function()
 {
+	this.loadGeneration += 1;
+	if (this.loading)
+		this.request.abort();
 	this.buffer = null;
 	this.loading = false;
 	this.loaded = false;
@@ -659,6 +666,7 @@ function ResourceLoader()
 	this.sprites = {};
 	
 	this.unloadedResources = [];
+	this.deferredSoundCount = 0;
 	
 	this.allReadyCheckValid = false;
 	this.allReady = false;
@@ -723,6 +731,15 @@ ResourceLoader.prototype.LoadAll = function()
 
 ResourceLoader.prototype.resourceLoadComplete = function(resource)
 {
+	// Deferred sounds load outside the startup queue, and a track that fails to load only
+	// costs its music (see Music.Update); it shouldn't stop the game with an error screen.
+	if (resource.deferred)
+	{
+		if (resource.error)
+			console.log("Error loading music: " + resource.src);
+		return;
+	}
+	
 	if (resource.error)
 		this.loadingError = true;
 	this.activeRequests -= 1;
@@ -764,7 +781,6 @@ ResourceLoader.prototype.AddImageFromCanvas = function(key,canvas)
 	
 	newResource.loaded = true;
 	newResource.image = canvas;
-	newResource.flippedImage = mirrorCanvas(canvas);
 	
 	this.images.push(newResource);
 };
@@ -782,6 +798,22 @@ ResourceLoader.prototype.AddAudioResource = function(key,src,samples)
 	var newResource = new AudioResource(key,src,samples);
 	this.sounds.push(newResource);
 	this.unloadedResources.push(newResource);
+};
+
+// Register a sound that Music loads and frees on demand. Decoded, the soundtrack is
+// hundreds of megabytes and only one track of it plays at a time.
+ResourceLoader.prototype.AddDeferredAudioResource = function(key,src,samples) 
+{
+	for (var i=0; i < this.sounds.length; i++)
+	{
+		if (this.sounds[i].matchesKey(key))
+			return;
+	}
+	
+	var newResource = new AudioResource(key,src,samples);
+	newResource.deferred = true;
+	this.sounds.push(newResource);
+	this.deferredSoundCount += 1;
 };
 
 ResourceLoader.prototype.AddSequentialAudioResources = function(key,src,start,stop) 
@@ -837,7 +869,7 @@ ResourceLoader.prototype.AllReady = function()
 	
 	for (var i=0; i < this.sounds.length; i++)
 	{
-		if (!this.sounds[i].isReady())
+		if (!this.sounds[i].deferred && !this.sounds[i].isReady())
 		{
 			if (this.sounds[i].error)
 			{
@@ -878,7 +910,7 @@ ResourceLoader.prototype.GetLoadPercentage = function()
 	if (this.allReadyCheckValid && this.allReady)
 		return 100;
 	
-	var totalItems =  this.images.length +  this.sounds.length +  this.fonts.length;
+	var totalItems =  this.images.length +  this.sounds.length +  this.fonts.length - this.deferredSoundCount;
 	var loadedItems = totalItems - this.unloadedResources.length;
 	
 	return Math.floor(loadedItems/totalItems*100);

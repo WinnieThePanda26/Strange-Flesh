@@ -159,6 +159,11 @@ intended tool for level changes — hand-editing the JSON is possible but fragil
   and `Music.js` creates `GlobalMusic`. Many files depend on load order.
 - Assets are absent from the repo; features touching new art/sound can't be fully verified
   without the media pack.
+- **Memory is a real limit on phones**, so loading is deliberately frugal. Sprite sheets exist
+  once and are mirrored at draw time (`drawImageFlipped`), never stored flipped. Music
+  (`AddDeferredAudioResource`) isn't part of the startup load and doesn't gate `AllReady()`:
+  `Music.setTrack()` loads the selected track and frees the others, so a segment's
+  `sound.buffer` is null unless its track is selected. Sound effects still load at startup.
 
 ## Current in-progress work
 
