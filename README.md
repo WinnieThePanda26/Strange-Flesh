@@ -44,6 +44,13 @@ contributors (and AI coding assistants) is in [`CLAUDE.md`](CLAUDE.md).
   you can track several enemies at once. Bars are segmented for readability. Bosses
   keep the original prominent top-right bar.
 
+### Touch controls
+- **On-screen D-pad and buttons** for phones and tablets (Attack, Smoke, Grab, Jump,
+  Special, Poppers, Pause), feeding the same input path as keyboard and gamepad, so
+  they work in menus as well as gameplay. Multi-touch, with slide-between-buttons.
+- A **"Touch Controls" setting** (Auto / On / Off). Auto shows them once the screen is
+  touched and hides them again on keyboard or gamepad input.
+
 ### Stability
 - Fixed **startup crashes** in both the game and the level editor.
 

@@ -104,7 +104,9 @@ state object every entity reads (`controller.left`, `.punch`, `.jump`, `startAct
 AI entities own a plain `Controller` the AI drives; the human player's entity points
 `this.controller` at the global `controller`, a `PlayerInputController` that maps keyboard +
 gamepad (via `GamepadButtonMonitor`) to the same interface. Keybinds live in `settings` and are
-applied in `loadSettings()`/`saveSettings()`.
+applied in `loadSettings()`/`saveSettings()`. On phones/tablets, `TouchControls.js` (global
+`touchControls`) draws an HTML D-pad + buttons over the canvas and presses the same
+`controller.*KeyDown/KeyUp` functions; `settings.touchControls` is Auto/On/Off.
 
 **Combat** (`Combat.js`): `Attack` objects describe a hitbox + damage payload (`damageDealt`,
 `corruptionDealt`, `staminaDrained`, `hitStunDealt`, `intoxicationDealt`, alliance). Live attacks

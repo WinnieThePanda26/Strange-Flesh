@@ -801,6 +801,12 @@ function ShowSettingsMenu(ingame)
 							settings.hudSize = this.selected;
 						}
 					},
+					{ "element":"multi", "label":"Touch Controls", "options":["Auto","On","Off"], "selected":settings.touchControls, "onChange":function()
+						{
+							settings.touchControls = this.selected;
+							touchControls.UpdateVisibility();
+						}
+					},
 					{ "element":"multi", "label":"Render Mode", "options":["Perfect","Rough","Blurry"], "selected":settings.renderMode, "onChange":function()
 						{ 
 							settings.renderMode = this.selected;
