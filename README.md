@@ -45,8 +45,8 @@ contributors (and AI coding assistants) is in [`CLAUDE.md`](CLAUDE.md).
   keep the original prominent top-right bar.
 
 ### Touch controls
-- **On-screen D-pad and buttons** for phones and tablets (Attack, Smoke, Grab, Jump,
-  Special, Poppers, Pause), feeding the same input path as keyboard and gamepad, so
+- **On-screen D-pad and buttons** for phones and tablets, labelled like a gamepad
+  (A Attack, B Smoke, X Grab, Y Jump, plus Special, Poppers and Pause icons), feeding the same input path as keyboard and gamepad, so
   they work in menus as well as gameplay. Multi-touch, with slide-between-buttons.
 - A **"Touch Controls" setting** (Auto / On / Off). Auto shows them once the screen is
   touched and hides them again on keyboard or gamepad input.

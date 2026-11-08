@@ -148,15 +148,30 @@ html, body
 	width: var(--touchFace);
 	height: var(--touchFace);
 	border-radius: 50%;
-	font-size: calc(var(--touchFace) * 0.2);
+	font-size: calc(var(--touchFace) * 0.44);
+	line-height: 1;
 }
+
+/* Icons (TouchControls.js touchIcons) take the button's text colour */
+.touchButton svg
+{
+	fill: currentColor;
+	filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+}
+.touchShoulder svg { width: calc(var(--touchFace) * 0.4); height: calc(var(--touchFace) * 0.4); }
+.touchStart svg    { width: calc(var(--touchFace) * 0.3); height: calc(var(--touchFace) * 0.3); }
+
+/* Face letters in the usual gamepad colours, so A/B/X/Y read at a glance */
+.touchA { color: rgba(120, 220, 110, 0.95); border-color: rgba(120, 220, 110, 0.45); }
+.touchB { color: rgba(240, 100, 95, 0.95);  border-color: rgba(240, 100, 95, 0.45); }
+.touchX { color: rgba(95, 155, 245, 0.95);  border-color: rgba(95, 155, 245, 0.45); }
+.touchY { color: rgba(245, 205, 80, 0.95);  border-color: rgba(245, 205, 80, 0.45); }
 
 .touchShoulder
 {
 	width: calc(var(--touchFace) * 1.2);
 	height: calc(var(--touchFace) * 0.55);
 	border-radius: calc(var(--touchFace) * 0.275);
-	font-size: calc(var(--touchFace) * 0.18);
 }
 
 .touchStart
@@ -167,5 +182,4 @@ html, body
 	height: calc(var(--touchFace) * 0.5);
 	margin-left: calc(var(--touchFace) * -0.6);
 	border-radius: calc(var(--touchFace) * 0.25);
-	font-size: calc(var(--touchFace) * 0.18);
 }
