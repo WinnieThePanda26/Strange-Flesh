@@ -43,51 +43,51 @@ include("GlassDoor.js");
 include("EndingDoor.js");
 
 // Setup the music. Because the music needs to be seamless, also include the number of samples in the file
-GlobalResourceLoader.AddAudioResource("titletheme_intro","sound/music/Title Track - Intro.m4a", 864192);
-GlobalResourceLoader.AddAudioResource("titletheme_loop","sound/music/Title Track - Loop.m4a", 4320192);
+GlobalResourceLoader.AddDeferredAudioResource("titletheme_intro","sound/music/Title Track - Intro.m4a", 864192);
+GlobalResourceLoader.AddDeferredAudioResource("titletheme_loop","sound/music/Title Track - Loop.m4a", 4320192);
 
-GlobalResourceLoader.AddAudioResource("level0_loop","sound/music/Level 0 - Loop.m4a", 2117568);
-GlobalResourceLoader.AddAudioResource("level0_pause","sound/music/Level 0 - Pause Music.m4a", 529344);
+GlobalResourceLoader.AddDeferredAudioResource("level0_loop","sound/music/Level 0 - Loop.m4a", 2117568);
+GlobalResourceLoader.AddDeferredAudioResource("level0_pause","sound/music/Level 0 - Pause Music.m4a", 529344);
 
-GlobalResourceLoader.AddAudioResource("level1_intro","sound/music/Level 1 - Intro.m4a", 433088);
-GlobalResourceLoader.AddAudioResource("level1_loop","sound/music/Level 1 - Loop.m4a", 4234176);
-GlobalResourceLoader.AddAudioResource("level1_pause","sound/music/Level 1 - Pause Music.m4a", 384960);
+GlobalResourceLoader.AddDeferredAudioResource("level1_intro","sound/music/Level 1 - Intro.m4a", 433088);
+GlobalResourceLoader.AddDeferredAudioResource("level1_loop","sound/music/Level 1 - Loop.m4a", 4234176);
+GlobalResourceLoader.AddDeferredAudioResource("level1_pause","sound/music/Level 1 - Pause Music.m4a", 384960);
 
-GlobalResourceLoader.AddAudioResource("level2_intro","sound/music/Level 2 - Intro.m4a", 1841088);
-GlobalResourceLoader.AddAudioResource("level2_loop","sound/music/Level 2 - Loop.m4a", 3497920);
-GlobalResourceLoader.AddAudioResource("level2_pause","sound/music/Level 2 - Pause Music.m4a", 184256);
+GlobalResourceLoader.AddDeferredAudioResource("level2_intro","sound/music/Level 2 - Intro.m4a", 1841088);
+GlobalResourceLoader.AddDeferredAudioResource("level2_loop","sound/music/Level 2 - Loop.m4a", 3497920);
+GlobalResourceLoader.AddDeferredAudioResource("level2_pause","sound/music/Level 2 - Pause Music.m4a", 184256);
 
-GlobalResourceLoader.AddAudioResource("level3_intro","sound/music/Level 3 - Intro.m4a", 1016768);
-GlobalResourceLoader.AddAudioResource("level3_loop","sound/music/Level 3 - Loop.m4a", 3387328);
-GlobalResourceLoader.AddAudioResource("level3_pause","sound/music/Level 3 - Pause Music.m4a", 338880);
+GlobalResourceLoader.AddDeferredAudioResource("level3_intro","sound/music/Level 3 - Intro.m4a", 1016768);
+GlobalResourceLoader.AddDeferredAudioResource("level3_loop","sound/music/Level 3 - Loop.m4a", 3387328);
+GlobalResourceLoader.AddDeferredAudioResource("level3_pause","sound/music/Level 3 - Pause Music.m4a", 338880);
 
-GlobalResourceLoader.AddAudioResource("level4_intro","sound/music/Level 4 - Intro.m4a", 677824);
-GlobalResourceLoader.AddAudioResource("level4_loop", "sound/music/Level 4 - Loop.m4a", 4742080);
-GlobalResourceLoader.AddAudioResource("level4_pause","sound/music/Level 4 - Pause Music.m4a", 677824);
+GlobalResourceLoader.AddDeferredAudioResource("level4_intro","sound/music/Level 4 - Intro.m4a", 677824);
+GlobalResourceLoader.AddDeferredAudioResource("level4_loop", "sound/music/Level 4 - Loop.m4a", 4742080);
+GlobalResourceLoader.AddDeferredAudioResource("level4_pause","sound/music/Level 4 - Pause Music.m4a", 677824);
 
-GlobalResourceLoader.AddAudioResource("level5_intro","sound/music/Level 5 - Intro.m4a", 1679296);
-GlobalResourceLoader.AddAudioResource("level5_loop", "sound/music/Level 5 - Loop.m4a", 8175552);
-GlobalResourceLoader.AddAudioResource("level5_pause","sound/music/Level 5 - Pause Music.m4a", 584640);
+GlobalResourceLoader.AddDeferredAudioResource("level5_intro","sound/music/Level 5 - Intro.m4a", 1679296);
+GlobalResourceLoader.AddDeferredAudioResource("level5_loop", "sound/music/Level 5 - Loop.m4a", 8175552);
+GlobalResourceLoader.AddDeferredAudioResource("level5_pause","sound/music/Level 5 - Pause Music.m4a", 584640);
 
-GlobalResourceLoader.AddAudioResource("final_sex_pause", "sound/music/Final Sex Scene - Pause.m4a", 784320);
-GlobalResourceLoader.AddAudioResource("final_sex_loop","sound/music/Final Sex Scene - Loop.m4a", 7840704);
+GlobalResourceLoader.AddDeferredAudioResource("final_sex_pause", "sound/music/Final Sex Scene - Pause.m4a", 784320);
+GlobalResourceLoader.AddDeferredAudioResource("final_sex_loop","sound/music/Final Sex Scene - Loop.m4a", 7840704);
 
 //GlobalResourceLoader.AddAudioResource("level6_intro","sound/music/Level 6 - Intro.m4a", 1412032);
-GlobalResourceLoader.AddAudioResource("level6_ticking","sound/music/Level 6 - Ticking.m4a", 353216);
+GlobalResourceLoader.AddDeferredAudioResource("level6_ticking","sound/music/Level 6 - Ticking.m4a", 353216);
 //GlobalResourceLoader.AddAudioResource("level6_loop", "sound/music/Level 6 - Loop.m4a", 7056320);
-GlobalResourceLoader.AddAudioResource("level6_pause","sound/music/Level 6 - Pause Music.m4a", 353216);
+GlobalResourceLoader.AddDeferredAudioResource("level6_pause","sound/music/Level 6 - Pause Music.m4a", 353216);
 
-GlobalResourceLoader.AddAudioResource("ending_dominate_intro","sound/music/Ending - Dominate - Intro.m4a",706496);
-GlobalResourceLoader.AddAudioResource("ending_dominate_loop","sound/music/Ending - Dominate - Loop.m4a", 6350784);
+GlobalResourceLoader.AddDeferredAudioResource("ending_dominate_intro","sound/music/Ending - Dominate - Intro.m4a",706496);
+GlobalResourceLoader.AddDeferredAudioResource("ending_dominate_loop","sound/music/Ending - Dominate - Loop.m4a", 6350784);
 
-GlobalResourceLoader.AddAudioResource("ending_corrupt_intro","sound/music/Ending - Corrupt 2 - Intro.m4a", 1078208);
-GlobalResourceLoader.AddAudioResource("ending_corrupt_loop1","sound/music/Ending - Corrupt 2 - Loop 1.m4a", 2352064);
-GlobalResourceLoader.AddAudioResource("ending_corrupt_loop2","sound/music/Ending - Corrupt 2 - Loop 2.m4a",2823104);
+GlobalResourceLoader.AddDeferredAudioResource("ending_corrupt_intro","sound/music/Ending - Corrupt 2 - Intro.m4a", 1078208);
+GlobalResourceLoader.AddDeferredAudioResource("ending_corrupt_loop1","sound/music/Ending - Corrupt 2 - Loop 1.m4a", 2352064);
+GlobalResourceLoader.AddDeferredAudioResource("ending_corrupt_loop2","sound/music/Ending - Corrupt 2 - Loop 2.m4a",2823104);
 
-GlobalResourceLoader.AddAudioResource("ending_boyfriend_intro","sound/music/Ending - Normal - Intro.m4a",1312704);
-GlobalResourceLoader.AddAudioResource("ending_boyfriend_loop","sound/music/Ending - Normal - Loop.m4a",7698368);
+GlobalResourceLoader.AddDeferredAudioResource("ending_boyfriend_intro","sound/music/Ending - Normal - Intro.m4a",1312704);
+GlobalResourceLoader.AddDeferredAudioResource("ending_boyfriend_loop","sound/music/Ending - Normal - Loop.m4a",7698368);
 
-GlobalResourceLoader.AddAudioResource("credits","sound/music/Credits.m4a", 4229056);
+GlobalResourceLoader.AddDeferredAudioResource("credits","sound/music/Credits.m4a", 4229056);
 
 GlobalMusic.tracks["title"] = new MusicTrack("title");
 var introSegment = new MusicSegment("titletheme_intro");

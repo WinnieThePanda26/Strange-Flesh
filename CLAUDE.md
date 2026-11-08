@@ -104,7 +104,9 @@ state object every entity reads (`controller.left`, `.punch`, `.jump`, `startAct
 AI entities own a plain `Controller` the AI drives; the human player's entity points
 `this.controller` at the global `controller`, a `PlayerInputController` that maps keyboard +
 gamepad (via `GamepadButtonMonitor`) to the same interface. Keybinds live in `settings` and are
-applied in `loadSettings()`/`saveSettings()`.
+applied in `loadSettings()`/`saveSettings()`. On phones/tablets, `TouchControls.js` (global
+`touchControls`) draws an HTML D-pad + buttons over the canvas and presses the same
+`controller.*KeyDown/KeyUp` functions; `settings.touchControls` is Auto/On/Off.
 
 **Combat** (`Combat.js`): `Attack` objects describe a hitbox + damage payload (`damageDealt`,
 `corruptionDealt`, `staminaDrained`, `hitStunDealt`, `intoxicationDealt`, alliance). Live attacks
@@ -159,6 +161,11 @@ intended tool for level changes — hand-editing the JSON is possible but fragil
   and `Music.js` creates `GlobalMusic`. Many files depend on load order.
 - Assets are absent from the repo; features touching new art/sound can't be fully verified
   without the media pack.
+- **Memory is a real limit on phones**, so loading is deliberately frugal. Sprite sheets exist
+  once and are mirrored at draw time (`drawImageFlipped`), never stored flipped. Music
+  (`AddDeferredAudioResource`) isn't part of the startup load and doesn't gate `AllReady()`:
+  `Music.setTrack()` loads the selected track and frees the others, so a segment's
+  `sound.buffer` is null unless its track is selected. Sound effects still load at startup.
 
 ## Current in-progress work
 
