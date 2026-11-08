@@ -25,16 +25,34 @@
 var touchDpadDeadZone = 0.25;
 var touchDpadDiagonalSlope = 0.414;
 
-// Action buttons laid out like the default gamepad binding: Attack on the bottom
-// face button, Smoke right, Grab left, Jump top, Special/Poppers as the shoulders.
+// Action buttons, laid out and coloured like the default gamepad binding: Attack on
+// A (bottom), Smoke on B (right), Grab on X (left), Jump on Y (top). The face buttons
+// show their letter; Special and Poppers, on the shoulders, show an icon. "action"
+// is each button's accessible name.
 var touchActionButtons = [
-	{ "name":"punch",   "label":"Attack",  "className":"touchFace",     "right":"calc(var(--touchFace) * 1.05)", "bottom":"0" },
-	{ "name":"smoke",   "label":"Smoke",   "className":"touchFace",     "right":"0",                            "bottom":"calc(var(--touchFace) * 1.0)" },
-	{ "name":"grab",    "label":"Grab",    "className":"touchFace",     "right":"calc(var(--touchFace) * 2.1)", "bottom":"calc(var(--touchFace) * 1.0)" },
-	{ "name":"jump",    "label":"Jump",    "className":"touchFace",     "right":"calc(var(--touchFace) * 1.05)", "bottom":"calc(var(--touchFace) * 2.0)" },
-	{ "name":"special", "label":"Special", "className":"touchShoulder", "right":"calc(var(--touchFace) * 1.9)", "bottom":"calc(var(--touchFace) * 3.15)" },
-	{ "name":"poppers", "label":"Poppers", "className":"touchShoulder", "right":"calc(var(--touchFace) * 0.2)", "bottom":"calc(var(--touchFace) * 3.15)" }
+	{ "name":"punch",   "glyph":"A",   "action":"Attack",  "className":"touchFace touchA", "right":"calc(var(--touchFace) * 1.05)", "bottom":"0" },
+	{ "name":"smoke",   "glyph":"B",   "action":"Smoke",   "className":"touchFace touchB", "right":"0",                            "bottom":"calc(var(--touchFace) * 1.0)" },
+	{ "name":"grab",    "glyph":"X",   "action":"Grab",    "className":"touchFace touchX", "right":"calc(var(--touchFace) * 2.1)", "bottom":"calc(var(--touchFace) * 1.0)" },
+	{ "name":"jump",    "glyph":"Y",   "action":"Jump",    "className":"touchFace touchY", "right":"calc(var(--touchFace) * 1.05)", "bottom":"calc(var(--touchFace) * 2.0)" },
+	{ "name":"special", "icon":"star", "action":"Special", "className":"touchShoulder",    "right":"calc(var(--touchFace) * 1.9)", "bottom":"calc(var(--touchFace) * 3.15)" },
+	{ "name":"poppers", "icon":"bolt", "action":"Poppers", "className":"touchShoulder",    "right":"calc(var(--touchFace) * 0.2)", "bottom":"calc(var(--touchFace) * 3.15)" }
 ];
+
+// Icons on a 24x24 grid, filled with the button's colour. Drawn rather than typed
+// so they look the same on every phone (emoji and symbol fonts vary).
+var touchIcons = {
+	"star":
+		'<path d="M12.0 1.5 L13.8 7.8 L19.4 4.6 L16.2 10.2 L22.5 12.0 L16.2 13.8 L19.4 19.4 L13.8 16.2 L12.0 22.5 L10.2 16.2 L4.6 19.4 L7.8 13.8 L1.5 12.0 L7.8 10.2 L4.6 4.6 L10.2 7.8 Z"/>',
+	"bolt":
+		'<path d="M14 1.5 L4.5 13.5 H11 L9.5 22.5 L19.5 9.5 H13 Z"/>',
+	"pause":
+		'<rect x="6" y="4" width="4.5" height="16" rx="1"/><rect x="13.5" y="4" width="4.5" height="16" rx="1"/>'
+};
+
+function touchIconSvg(name)
+{
+	return '<svg viewBox="0 0 24 24" aria-hidden="true">' + touchIcons[name] + '</svg>';
+}
 
 function TouchControls()
 {
@@ -64,7 +82,11 @@ function TouchControls()
 		var def = touchActionButtons[i];
 		var el = document.createElement("div");
 		el.className = "touchButton " + def.className;
-		el.textContent = def.label;
+		if (def.icon)
+			el.innerHTML = touchIconSvg(def.icon);
+		else
+			el.textContent = def.glyph;
+		el.setAttribute("aria-label", def.action);
 		el.style.right = def.right;
 		el.style.bottom = def.bottom;
 		actions.appendChild(el);
@@ -74,7 +96,8 @@ function TouchControls()
 
 	var start = document.createElement("div");
 	start.className = "touchButton touchStart";
-	start.textContent = "Pause";
+	start.innerHTML = touchIconSvg("pause");
+	start.setAttribute("aria-label", "Pause");
 	this.root.appendChild(start);
 	this.buttons.push({ "name":"start", "element":start });
 
