@@ -82,4 +82,39 @@ module.exports = [
       t.log(`corrupted and gone after ${r.defeatFrames} frames`);
     },
   },
+  {
+    // Quitting to the title screen and starting again resets the HUD. An orb
+    // that was still flying to a meter at that moment must not land in the new
+    // game. (HUD.Reset() used to leave hud.orbs alone.)
+    name: 'defeat: orbs still flying to the HUD are dropped when the HUD resets',
+    async run(t) {
+      const r = await t.eval(() => {
+        SFTest.newGame('arena');
+        var bot = SFTest.bot;
+        var joe = SFTest.spawn('Joe0', 400, 0);
+        bot.drive(function () {
+          var orbs = SFTest.orbs(ORB_DOMINATE);
+          if (joe.state !== States.Dead) bot.fight(joe);
+          else if (orbs.length) bot.moveToward(orbs[0].posX, orbs[0].posY, 10, 10);
+        }, function () { return SFTest.orbsInFlight() > 0; }, 3000);
+        var out = { inFlight: SFTest.orbsInFlight() };
+
+        // What "Exit to Title" then "New Game" does to the HUD and the meters.
+        hud.Reset();
+        enemiesDispatched = 0;
+        enemiesCorrupted = 0;
+        // A new game is also a new level: take away any orb still lying on the
+        // ground, so only the ones that were in flight are being judged.
+        SFTest.orbs().forEach(function (orb) { level.entities.Remove(orb); });
+        out.inFlightAfterReset = SFTest.orbsInFlight();
+        SFTest.step(400);
+        out.after = enemiesDispatched;
+        return out;
+      });
+      assert.ok(r.inFlight > 0, 'could not get an orb into flight to set the situation up');
+      assert.strictEqual(r.inFlightAfterReset, 0, 'orbs were still in flight after hud.Reset()');
+      assert.strictEqual(r.after, 0,
+        `${r.after} domination orb(s) from the previous game were counted after the reset`);
+    },
+  },
 ];

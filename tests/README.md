@@ -48,7 +48,7 @@ When a test fails, a screenshot and a dump of the game state are written to
 | `02-level-smoke.js` | Levels 0–6 each load and run 600 frames with no errors or NaN positions |
 | `03-enemy-ai.js` | Each of the 14 hostile enemy types attacks an idle player; Joe0 stays a pacifist; OfficeAngel flees an Admonitor |
 | `04-grab.js` | Grab, carry and release |
-| `05-defeat.js` | Knockout gives domination orbs only; corruption gives corruption orbs only; meters move when the orbs land |
+| `05-defeat.js` | Knockout gives domination orbs only; corruption gives corruption orbs only; meters move when the orbs land; a HUD reset drops orbs still in flight |
 | `06-joe5-phases.js` | The level 5 boss changes AI phase 0→4 on the right triggers |
 | `07-save-load.js` | Save, wipe, load: lives, poppers, health, meters, position and every entity come back |
 | `08-transitions.js` | Level 0 → 1; level 1 → 2 → 1 returns to the level as it was left |
@@ -192,8 +192,5 @@ A test with a `known: '...'` field documents a problem in the game. While it fai
 listed as `known` and does not fail the run. If it starts passing, the runner says so;
 remove the `known` field then, and the test guards the fix.
 
-Currently:
-
-1. **Gameplay depends on how often the screen is drawn** (see "How it works").
-2. **Orbs in flight carry into the next game.** `HUD.Reset()` does not clear `hud.orbs`,
-   so an orb picked up just before quitting to the title screen lands in the next game.
+Currently there is one: **gameplay depends on how often the screen is drawn** (see
+"How it works").

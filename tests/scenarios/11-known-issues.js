@@ -42,34 +42,4 @@ module.exports = [
         `drawing every second frame changed the game from frame ${r.diverged} on`);
     },
   },
-  {
-    name: 'known issue: orbs still flying to the HUD should not be credited to the next game',
-    known: 'HUD.Reset() does not clear hud.orbs, so an orb picked up just before quitting to the title ' +
-      'screen finishes its flight in the next game and bumps that game\'s meter (or health, or lives).',
-    async run(t) {
-      const r = await t.eval(() => {
-        SFTest.newGame('arena');
-        var bot = SFTest.bot;
-        var joe = SFTest.spawn('Joe0', 400, 0);
-        bot.drive(function () {
-          var orbs = SFTest.orbs(ORB_DOMINATE);
-          if (joe.state !== States.Dead) bot.fight(joe);
-          else if (orbs.length) bot.moveToward(orbs[0].posX, orbs[0].posY, 10, 10);
-        }, function () { return SFTest.orbsInFlight() > 0; }, 3000);
-        var out = { inFlight: SFTest.orbsInFlight(), before: enemiesDispatched };
-
-        // What "Exit to Title" then "New Game" does to the HUD and the meters.
-        hud.Reset();
-        enemiesDispatched = 0;
-        enemiesCorrupted = 0;
-        out.inFlightAfterReset = SFTest.orbsInFlight();
-        SFTest.step(400);
-        out.after = enemiesDispatched;
-        return out;
-      });
-      assert.ok(r.inFlight > 0, 'could not get an orb into flight to set the situation up');
-      assert.strictEqual(r.after, 0,
-        `${r.after} domination orb(s) from the previous game were counted after the reset`);
-    },
-  },
 ];

@@ -251,7 +251,6 @@
 
 		enemyinfo.Clear();
 		hud.Reset();
-		hud.orbs = [];		// orbs still flying to the HUD; hud.Reset() leaves them
 		ClearSuspendableSounds();
 
 		neverSaved = true;
