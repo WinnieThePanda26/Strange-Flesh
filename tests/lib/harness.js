@@ -88,8 +88,23 @@ function startServer() {
   });
 }
 
+// opts.headless: false gives a visible window (recording, watching). Chrome slows
+// timers in a window that is covered or in the background, which would slow the
+// game with it, so that is switched off for visible windows.
 async function launchBrowser(opts) {
   const { launch } = require(path.join(SKILL, 'common.js'));
+  opts = Object.assign({}, opts);
+  if (opts.headless === false) {
+    // Ctrl-C has to reach the recorder (which saves and then exits), not make
+    // puppeteer quit on the spot.
+    opts.handleSIGINT = false;
+    opts.args = [
+      `--window-size=${VIEWPORT.width + 16},${VIEWPORT.height + 140}`,
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-background-timer-throttling',
+    ];
+  }
   return await launch(VIEWPORT.width, VIEWPORT.height, opts);
 }
 

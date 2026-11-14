@@ -7,7 +7,7 @@
  *
  * It gives the tests a deterministic game:
  *   - the game's setInterval(tick) is swallowed, so nothing updates until a
- *     test calls SFTest.step(n), which calls updateAll() n times;
+ *     test calls SFTest.step(n), which runs n frames;
  *   - Math.random is replaced by a seeded generator (SFTest.seed(n));
  *   - drawing is taken off requestAnimationFrame once SFTest.freeze() is called;
  *     from then on every step is one updateAll() followed by one drawAll(). The

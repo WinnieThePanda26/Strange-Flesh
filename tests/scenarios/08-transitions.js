@@ -53,13 +53,8 @@ module.exports = [
         out.rosterAtStart = SFTest.roster().length;
 
         // Defeat someone and collect, so there is progress to lose.
-        out.fightFrames = bot.drive(function () {
-          var enemy = SFTest.nearestEnemy(1200);
-          var orbs = SFTest.orbs(ORB_DOMINATE);
-          if (enemy) bot.fight(enemy);
-          else if (orbs.length) bot.moveToward(orbs[0].posX, orbs[0].posY, 10, 10);
-          else bot.hold('right');
-        }, function () { return enemiesDispatched >= 2 && SFTest.orbsInFlight() === 0; }, 6000);
+        out.fightFrames = bot.drive(function () { bot.brawl(900); },
+          function () { return enemiesDispatched >= 2 && SFTest.orbsInFlight() === 0; }, 9000);
 
         out.before = { roster: SFTest.roster(), dispatched: enemiesDispatched, levelTally: level.dominationCollected };
 

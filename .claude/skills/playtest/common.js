@@ -9,11 +9,14 @@ const DEFAULT_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Ch
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // opts.headless: false opens a visible window (the test harness uses it to record input).
+// opts.args: extra Chrome flags. opts.handleSIGINT: false leaves Ctrl-C to the caller.
 async function launch(width, height, opts) {
   return await puppeteer.launch({
     executablePath: process.env.CHROME_PATH || DEFAULT_CHROME,
+    handleSIGINT: !(opts && opts.handleSIGINT === false),
     headless: (opts && opts.headless === false) ? false : 'new',
-    args: ['--autoplay-policy=no-user-gesture-required', '--no-sandbox', '--mute-audio'],
+    args: ['--autoplay-policy=no-user-gesture-required', '--no-sandbox', '--mute-audio']
+      .concat((opts && opts.args) || []),
     defaultViewport: { width: width, height: height, deviceScaleFactor: 1 },
     protocolTimeout: 300000,   // record.js pulls a whole video back through one evaluate
   });

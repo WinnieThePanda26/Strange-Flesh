@@ -136,6 +136,24 @@
 			Bot.tap("punch", 3, 9);
 	};
 
+	// Rough-house policy for tests that just need some progress made: fight the
+	// nearest enemy within `range`, otherwise pick up a dropped meter orb,
+	// otherwise walk right.
+	Bot.brawl = function(range)
+	{
+		var enemy = T.nearestEnemy(range);
+		if (enemy !== null && enemy.health > 0 && !IsCorrupt(enemy.state))
+		{
+			Bot.fight(enemy);
+			return;
+		}
+		var orbs = T.orbs(ORB_DOMINATE).concat(T.orbs(ORB_CORRUPT));
+		if (orbs.length)
+			Bot.moveToward(orbs[0].posX, orbs[0].posY, 10, 10);
+		else
+			want.right = true;
+	};
+
 	// Run the game with `policy()` deciding the buttons each frame, until
 	// `done()` returns true. Returns the frames taken, or -1 if maxFrames ran out.
 	Bot.drive = function(policy, done, maxFrames)

@@ -26,7 +26,7 @@ module.exports = recordings.list().map((name) => ({
     }
 
     const s = result.snapshot;
-    assert.strictEqual(diverged, null, diverged === null ? '' :
+    assert.ok(diverged === null, diverged === null ? '' :
       `the game no longer plays "${name}" the way it was recorded (${rec.recorded}).\n` +
       `It matches up to frame ${diverged.lastGood} and differs by frame ${diverged.frame} ` +
       `(of ${rec.frames}; ${rec.level}, seed ${rec.seed}).\n` +

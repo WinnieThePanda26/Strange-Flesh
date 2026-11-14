@@ -124,6 +124,12 @@ wrapped so anything routed to `audioContext.destination` (the music bus, each
 `MediaRecorder`. `--mute-audio` only silences the speakers, not the tap. No ffmpeg
 needed.
 
+## Shared with the test harness
+
+`common.js` is also used by the automated tests (`tests/run.js`, see `tests/README.md`),
+which rely on `launch(width, height, opts)` and the `puppeteer-core` install here. This
+skill is for *looking* at the game; the tests are for checking behaviour.
+
 ## Gotchas / how it works
 
 - The loader hard-gates `AllReady` behind a WebAudio unlock (`ResourceLoader.js`

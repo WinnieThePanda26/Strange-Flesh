@@ -14,11 +14,8 @@ module.exports = {
       var out = { existedBefore: savedGameExists() };
 
       // Make some progress worth saving: beat up the first few locals.
-      out.fightFrames = bot.drive(function () {
-        var enemy = SFTest.nearestEnemy(900);
-        if (enemy) bot.fight(enemy);
-        else bot.hold('right');
-      }, function () { return enemiesDispatched >= 4; }, 6000);
+      out.fightFrames = bot.drive(function () { bot.brawl(900); },
+        function () { return enemiesDispatched >= 4; }, 9000);
       SFTest.stepUntil(function () { return SFTest.orbsInFlight() === 0 && OkToSave(player.state) && player.posZ === 0; }, 600);
 
       // Values a fresh game would not have.

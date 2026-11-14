@@ -211,7 +211,7 @@ async function watchBot(args, browser, base) {
   const page = await h.openGame(browser, base, { seed: args.seed });
   console.log(`Bot playing ${from} (seed ${args.seed}). Close the window to stop.`);
   await page.evaluate((from, next) => {
-    SFTest.newGame(from, { settle: false });
+    SFTest.newGame(from);      // the same start as the bot tests, so this is the run they see
     var brain = SFTest.bot.makeBrain(next);
     window.__sfWatch = { done: false };
     SFTest.runRealtime(function () {

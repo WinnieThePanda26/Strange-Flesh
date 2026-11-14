@@ -35,7 +35,7 @@ function botTest(from, to, maxFrames, skirmishes) {
         SFTest.newGame(from);
         return SFTest.bot.clearLevel(to, maxFrames);
       }, from, to, maxFrames);
-      assert.strictEqual(r.outcome, 'exit', describeFailure(r));
+      assert.ok(r.outcome === 'exit', describeFailure(r));
       assert.strictEqual(r.level, to);
       assert.strictEqual(r.skirmishesCleared, skirmishes, `${from} has ${skirmishes} skirmishes to clear on the way`);
       t.log(`${r.frames} frames (${Math.round(r.frames / 60)}s of play), ${r.deaths} deaths, ` +
