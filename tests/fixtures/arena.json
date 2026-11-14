@@ -1,0 +1,67 @@
+{
+	"musicTrack": "unknown",
+	"displayName": "Test Arena",
+	"zombiesCanSpawn": false,
+	"gameOverScreen": "gameover1",
+	"frozen": false,
+	"spawnPosition": {
+		"x": 0,
+		"y": 0,
+		"z": 0
+	},
+	"cameraSpawnPosition": {
+		"x": 0,
+		"y": 0
+	},
+	"storedPlayerPosition": {
+		"x": 0,
+		"y": 0
+	},
+	"storedCameraPosition": {
+		"x": 0,
+		"y": 0
+	},
+	"dominationCollected": 0,
+	"corruptionCollected": 0,
+	"entities": [],
+	"effects": [],
+	"foreground": [],
+	"background": [],
+	"skirmishes": [],
+	"transitions": [],
+	"collisionMask": [
+		{
+			"descriptorObjectType": "LineSegment",
+			"x1": -2500,
+			"x2": 2500,
+			"y1": -160,
+			"y2": -160,
+			"playerOnly": false
+		},
+		{
+			"descriptorObjectType": "LineSegment",
+			"x1": -2500,
+			"x2": 2500,
+			"y1": 160,
+			"y2": 160,
+			"playerOnly": false
+		},
+		{
+			"descriptorObjectType": "LineSegment",
+			"x1": -2500,
+			"x2": -2500,
+			"y1": -160,
+			"y2": 160,
+			"playerOnly": false
+		},
+		{
+			"descriptorObjectType": "LineSegment",
+			"x1": 2500,
+			"x2": 2500,
+			"y1": -160,
+			"y2": 160,
+			"playerOnly": false
+		}
+	],
+	"cameraMask": []
+}

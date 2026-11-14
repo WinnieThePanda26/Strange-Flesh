@@ -8,10 +8,11 @@ const puppeteer = require(path.join(__dirname, 'node_modules', 'puppeteer-core')
 const DEFAULT_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function launch(width, height) {
+// opts.headless: false opens a visible window (the test harness uses it to record input).
+async function launch(width, height, opts) {
   return await puppeteer.launch({
     executablePath: process.env.CHROME_PATH || DEFAULT_CHROME,
-    headless: 'new',
+    headless: (opts && opts.headless === false) ? false : 'new',
     args: ['--autoplay-policy=no-user-gesture-required', '--no-sandbox', '--mute-audio'],
     defaultViewport: { width: width, height: height, deviceScaleFactor: 1 },
     protocolTimeout: 300000,   // record.js pulls a whole video back through one evaluate
@@ -44,4 +45,4 @@ async function reachReady(page) {
   return false;
 }
 
-module.exports = { sleep, launch, reachReady };
+module.exports = { sleep, launch, reachReady, DEFAULT_CHROME };
