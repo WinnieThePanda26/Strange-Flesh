@@ -58,9 +58,9 @@ module.exports = [
       assert.strictEqual(r.corruptOrbs, 0, 'corruption orbs dropped');
       assert.deepStrictEqual(r.midCounters, [0, 0], 'the meters moved before any orb was collected');
       assert.notStrictEqual(r.collectFrames, -1, 'the orbs were never collected');
-      assert.strictEqual(r.enemiesDispatched, r.orbsOnDeath);
-      assert.strictEqual(r.enemiesCorrupted, 0);
-      assert.strictEqual(r.levelDomination, r.orbsOnDeath, "the level's own tally");
+      assert.strictEqual(r.enemiesDispatched, r.orbsOnDeath, 'the domination meter once the orbs landed');
+      assert.strictEqual(r.enemiesCorrupted, 0, 'the corruption meter');
+      assert.strictEqual(r.levelDomination, r.orbsOnDeath, "the level's own domination tally");
       assert.strictEqual(r.joeStillInLevel, false, 'the dead Joe0 was not removed from the level');
       t.log(`knocked out for good after ${r.defeatFrames} frames`);
     },
@@ -75,9 +75,9 @@ module.exports = [
       assert.strictEqual(r.corruptOrbs, r.orbsOnDeath, 'corruption orbs dropped');
       assert.strictEqual(r.dominateOrbs, 0, 'domination orbs dropped');
       assert.notStrictEqual(r.collectFrames, -1, 'the orbs were never collected');
-      assert.strictEqual(r.enemiesCorrupted, r.orbsOnDeath);
-      assert.strictEqual(r.enemiesDispatched, 0);
-      assert.strictEqual(r.levelCorruption, r.orbsOnDeath, "the level's own tally");
+      assert.strictEqual(r.enemiesCorrupted, r.orbsOnDeath, 'the corruption meter once the orbs landed');
+      assert.strictEqual(r.enemiesDispatched, 0, 'the domination meter');
+      assert.strictEqual(r.levelCorruption, r.orbsOnDeath, "the level's own corruption tally");
       assert.strictEqual(r.joeStillInLevel, false, 'the corrupted Joe0 was not removed from the level');
       t.log(`corrupted and gone after ${r.defeatFrames} frames`);
     },

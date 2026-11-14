@@ -1,14 +1,12 @@
 /*
- * harness.js — Node-side plumbing for tests/run.js: preflight checks, the static
- * server, the browser (through the playtest skill's puppeteer-core), and opening
- * a game page with the test hooks installed.
+ * harness.js — Node-side plumbing for tests/run.js: preflight checks, a static
+ * file server, the browser (through the playtest skill's puppeteer-core), and
+ * opening a game page with the test hooks installed.
  */
 
 const fs = require('fs');
 const path = require('path');
-const net = require('net');
 const http = require('http');
-const { spawn } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const TESTS = path.join(ROOT, 'tests');
@@ -41,41 +39,53 @@ function preflight() {
   return problems;
 }
 
-function freePort() {
-  return new Promise((resolve, reject) => {
-    const srv = net.createServer();
-    srv.on('error', reject);
-    srv.listen(0, '127.0.0.1', () => {
-      const port = srv.address().port;
-      srv.close(() => resolve(port));
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8', '.txt': 'text/plain; charset=utf-8',
+  '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg',
+  '.gif': 'image/gif', '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
+  '.wav': 'audio/wav', '.ttf': 'font/ttf', '.woff': 'font/woff', '.woff2': 'font/woff2',
+};
+
+// Serve the repo over HTTP on a spare port, no caching: the same job as
+// serve.py, done in-process because several test pages load at once and
+// serve.py answers one request at a time.
+function startServer() {
+  const server = http.createServer((req, res) => {
+    let rel;
+    try {
+      rel = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    } catch (e) {
+      res.writeHead(400); res.end(); return;
+    }
+    const target = path.normalize(path.join(ROOT, rel));
+    if (target !== ROOT && !target.startsWith(ROOT + path.sep)) {
+      res.writeHead(403); res.end(); return;
+    }
+    fs.stat(target, (err, stat) => {
+      if (err || !stat.isFile()) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('File not found');
+        return;
+      }
+      res.writeHead(200, {
+        'Content-Type': MIME[path.extname(target).toLowerCase()] || 'application/octet-stream',
+        'Content-Length': stat.size,
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      });
+      if (req.method === 'HEAD') { res.end(); return; }
+      fs.createReadStream(target).pipe(res);
     });
   });
-}
-
-function httpOk(url) {
-  return new Promise((resolve) => {
-    const req = http.get(url, (res) => { res.resume(); resolve(res.statusCode === 200); });
-    req.on('error', () => resolve(false));
-    req.setTimeout(1000, () => { req.destroy(); resolve(false); });
+  return new Promise((resolve, reject) => {
+    server.on('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      resolve({
+        base: `http://127.0.0.1:${server.address().port}`,
+        stop: () => { server.close(); if (server.closeAllConnections) server.closeAllConnections(); },
+      });
+    });
   });
-}
-
-// Start serve.py (the repo's no-cache static server) on a spare port.
-async function startServer() {
-  const port = await freePort();
-  const child = spawn('python3', ['serve.py', '--port', String(port)], { cwd: ROOT, stdio: 'ignore' });
-  let exited = false;
-  child.on('exit', () => { exited = true; });
-  const base = `http://127.0.0.1:${port}`;
-  for (let i = 0; i < 100; i++) {
-    if (exited) throw new Error('serve.py exited before it started serving (is python3 installed?)');
-    if (await httpOk(base + '/index.html')) {
-      return { base, stop: () => { if (!exited) child.kill(); } };
-    }
-    await sleep(100);
-  }
-  child.kill();
-  throw new Error('serve.py did not start serving within 10 seconds');
 }
 
 async function launchBrowser(opts) {
@@ -108,7 +118,8 @@ function inPageSources() {
 }
 
 // Open the game in a new page with the hooks installed, wait for every resource
-// to load, then freeze drawing. The page comes back ready for SFTest.newGame().
+// to load, then take drawing off the browser's own timer. The page comes back
+// ready for SFTest.newGame().
 async function openGame(browser, base, opts) {
   opts = opts || {};
   const page = await browser.newPage();
@@ -143,11 +154,11 @@ async function openGame(browser, base, opts) {
       (page.sfErrors.length ? ' (page errors: ' + page.sfErrors.join(' | ') + ')' : ''));
   }
 
-  await page.evaluate((levels, seed, live) => {
+  await page.evaluate((levels, seed) => {
     for (const name in levels) SFTest.levelText[name] = levels[name];
     SFTest.defaultSeed = seed;
-    if (!live) SFTest.freeze();
-  }, readLevels(), opts.seed === undefined ? 1 : opts.seed, !!opts.live);
+    SFTest.freeze();
+  }, readLevels(), opts.seed === undefined ? 1 : opts.seed);
 
   return page;
 }
@@ -166,7 +177,6 @@ async function dumpFailure(page, name) {
       try { return SFTest.snapshot(); } catch (e) { return { error: String(e) }; }
     });
     fs.writeFileSync(path.join(dir, 'state.json'), JSON.stringify(snap, null, 2));
-    await page.evaluate(() => { try { SFTest.draw(); } catch (e) {} });
     await page.screenshot({ path: path.join(dir, 'screenshot.png') });
     return dir;
   } catch (e) {

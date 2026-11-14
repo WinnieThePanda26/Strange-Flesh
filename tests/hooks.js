@@ -9,9 +9,12 @@
  *   - the game's setInterval(tick) is swallowed, so nothing updates until a
  *     test calls SFTest.step(n), which calls updateAll() n times;
  *   - Math.random is replaced by a seeded generator (SFTest.seed(n));
- *   - drawing is taken off requestAnimationFrame once SFTest.freeze() is called
- *     (SFTest.draw() renders one frame on demand, e.g. for a failure screenshot),
- *     and draw code gets its own random stream so it can never disturb gameplay;
+ *   - drawing is taken off requestAnimationFrame once SFTest.freeze() is called;
+ *     from then on every step is one updateAll() followed by one drawAll(). The
+ *     draw is not optional: some game logic (footsteps, smoke puffs, the
+ *     StarvingArtist's walk) reads animation flags that only a draw refreshes,
+ *     so "one draw per update" is part of what makes a run reproducible. Draw
+ *     code gets its own random stream so it can never disturb gameplay's;
  *   - level files are loaded synchronously from text handed in by the runner.
  *
  * Plain ES5, like the game.
@@ -23,7 +26,7 @@
 
 	var T = window.SFTest = {};
 
-	T.frame = 0;			// updateAll() calls since the last newGame()
+	T.frame = 0;			// frames (update + draw) since the last newGame()
 	T.defaultSeed = 1;
 	T.levelText = {};		// level name -> descriptor JSON text (set by the runner)
 	T.tickSwallowed = 0;
@@ -94,21 +97,20 @@
 
 	T.freeze = function() { T.liveDraw = false; };
 
-	T.thaw = function()
-	{
-		if (!T.liveDraw)
-		{
-			T.liveDraw = true;
-			window.requestAnimationFrame(drawAll);
-		}
-	};
-
-	// Render one frame right now (for screenshots).
+	// Draw one frame right now. Called after every update (see frame() below).
 	T.draw = function()
 	{
 		updated = true;
 		withDrawRandom(drawAll);
 	};
+
+	// One frame of the game as the tests define it: an update, then a draw.
+	function frame()
+	{
+		updateAll();
+		T.draw();
+		T.frame += 1;
+	}
 
 	//////////////////////////////
 	// Input
@@ -168,8 +170,7 @@
 				throw new Error("SFTest.step: game is not ready (a level or resource is still loading)");
 			if (T.onBeforeStep !== null)
 				T.onBeforeStep(T.frame);
-			updateAll();
-			T.frame += 1;
+			frame();
 		}
 	};
 
@@ -325,6 +326,47 @@
 		return found;
 	};
 
+	// Put the player somewhere, standing still (for tests that are about a trigger,
+	// not about the walk to it).
+	T.teleport = function(x, y)
+	{
+		player.posX = x;
+		player.posY = y;
+		player.posZ = 0;
+		player.velX = 0;
+		player.velY = 0;
+		player.velZ = 0;
+	};
+
+	// The transition box in the current level that leads to the named level.
+	T.exitTo = function(targetLevel)
+	{
+		for (var i = 0; i < level.transitions.length; i++)
+		{
+			if (level.transitions[i].changeLevel && level.transitions[i].targetLevel === targetLevel)
+				return level.transitions[i];
+		}
+		return null;
+	};
+
+	// The nearest live enemy to the player within maxDistance (or null).
+	T.nearestEnemy = function(maxDistance)
+	{
+		var enemies = T.enemies();
+		var best = null;
+		var bestDistance = (typeof maxDistance === "undefined") ? Number.MAX_VALUE : maxDistance;
+		for (var i = 0; i < enemies.length; i++)
+		{
+			var d = distance(player.posX, player.posY, enemies[i].posX, enemies[i].posY);
+			if (d < bestDistance)
+			{
+				bestDistance = d;
+				best = enemies[i];
+			}
+		}
+		return best;
+	};
+
 	// Live enemies (alliance 2, with health, not already dying).
 	T.enemies = function()
 	{
@@ -380,9 +422,11 @@
 	// Every entity a level holds apart from the player and loose orbs: the ones
 	// in play, the ones waiting off-screen to spawn, and the ones held back by a
 	// skirmish. Returned as sorted "Type@x,y" strings so two rosters compare easily.
-	T.roster = function(levelObj)
+	// grid: snap positions to this many pixels (a save game stores them on a 3px grid).
+	T.roster = function(levelObj, grid)
 	{
 		levelObj = levelObj || level;
+		grid = grid || 1;
 		var seen = [];
 		var lists = [levelObj.entities.list, levelObj.entitiesToSpawn];
 		for (var s = 0; s < levelObj.skirmishes.length; s++)
@@ -397,7 +441,7 @@
 				if (e === player || e instanceof CollectableOrb || seen.indexOf(e) !== -1)
 					continue;
 				seen.push(e);
-				rows.push(T.typeName(e) + "@" + Math.round(e.posX) + "," + Math.round(e.posY));
+				rows.push(T.typeName(e) + "@" + Math.round(e.posX / grid) * grid + "," + Math.round(e.posY / grid) * grid);
 			}
 		}
 		rows.sort();
@@ -405,7 +449,7 @@
 	};
 
 	// The things a save game is supposed to carry.
-	T.progress = function()
+	T.progress = function(grid)
 	{
 		return {
 			level: level.levelName,
@@ -416,7 +460,9 @@
 			enemiesDispatched: enemiesDispatched,
 			enemiesCorrupted: enemiesCorrupted,
 			continuesUsed: continuesUsed,
-			roster: T.roster()
+			x: Math.round(player.posX / (grid || 1)) * (grid || 1),
+			y: Math.round(player.posY / (grid || 1)) * (grid || 1),
+			roster: T.roster(level, grid)
 		};
 	};
 
@@ -528,16 +574,16 @@
 		for (var i = 0; i < BUTTONS.length; i++)
 			recorder.down.push(false);
 
-		T.thaw();
 		recorder.timer = realSetInterval.call(window, function()
 		{
 			if (recorder === null || recorder.error !== null || !GlobalResourceLoader.AllReady())
 				return;
 			try
 			{
+				if (T.onBeforeStep !== null)
+					T.onBeforeStep(T.frame);
 				sampleButtons(T.frame);
-				updateAll();
-				T.frame += 1;
+				frame();
 				if (T.frame % recorder.digestEvery === 0)
 					recorder.digests.push([T.frame, T.digest()]);
 			}
@@ -565,6 +611,33 @@
 		var result = T.recordingSoFar();
 		recorder = null;
 		return result;
+	};
+
+	// Run the game at normal speed (60 frames a second), for watching in a
+	// visible window. beforeFrame(frame) is called before every update and
+	// returns false to stop.
+	T.runRealtime = function(beforeFrame)
+	{
+		var timer = realSetInterval.call(window, function()
+		{
+			try
+			{
+				if (!GlobalResourceLoader.AllReady())
+					return;
+				if (beforeFrame(T.frame) === false)
+				{
+					clearInterval(timer);
+					T.releaseAll();
+					return;
+				}
+				frame();
+			}
+			catch (err)
+			{
+				clearInterval(timer);
+				throw err;
+			}
+		}, 1000 / 60);
 	};
 
 	// Play a recording back for `frames` updates. Returns the digests taken at the

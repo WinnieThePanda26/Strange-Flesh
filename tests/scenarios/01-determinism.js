@@ -1,6 +1,7 @@
 /*
  * The foundation everything else stands on: the same seed and the same input
  * give exactly the same game, frame for frame, in two separate page loads.
+ * (A frame here is one update followed by one draw; see tests/hooks.js.)
  */
 const assert = require('assert');
 
@@ -24,7 +25,25 @@ function firstDifference(a, b) {
   return -1;
 }
 
-module.exports = {
+// In-page: play several quite different games, to leave as much behind in the
+// page as a game can.
+function playOtherGames() {
+  var bot = SFTest.bot;
+  SFTest.newGame('level0');
+  bot.clearLevel('level1', 8000);
+  SFTest.newGame('arena');
+  var joe = SFTest.spawn('Joe1', 400, 0);
+  bot.drive(function () { bot.fight(joe); }, function () { return joe.state === States.Dead; }, 3000);
+  SFTest.newGame('level5', { settle: false });
+  SFTest.step(900);
+  SFTest.newGame('level1');
+  saveGame();
+  SFTest.newGame('level0');
+  loadGame();
+  SFTest.step(200);
+}
+
+const sameSeed = {
   name: 'determinism: same seed replays level 1 identically, another seed does not',
   async run(t) {
     const FRAMES = 3600;
@@ -52,3 +71,21 @@ module.exports = {
     t.log(`player reached x=${first.snapshot.player.x}, ${first.snapshot.rngCalls} random calls`);
   },
 };
+
+// The runner lets the tests in a file share one page, each starting from
+// SFTest.newGame(). That is only sound if newGame() leaves nothing behind.
+const cleanSlate = {
+  name: 'determinism: a new game in a used page plays the same as in a fresh page',
+  async run(t) {
+    const FRAMES = 3000;
+    const fresh = await t.eval(playLevel1, 1234, FRAMES);
+    await t.eval(playOtherGames);
+    const used = await t.eval(playLevel1, 1234, FRAMES);
+    const diff = firstDifference(fresh.digests, used.digests);
+    assert.strictEqual(diff, -1,
+      `after other games had been played in the page, the same game diverged at frame ${diff}: ` +
+      'something survives SFTest.newGame()');
+  },
+};
+
+module.exports = [cleanSlate, sameSeed];
