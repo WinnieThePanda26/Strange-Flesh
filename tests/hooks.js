@@ -213,6 +213,16 @@
 		};
 	}
 
+	// End an arcade run an earlier test left going. The game banks the score of a
+	// run that is quit half way; a test starts with whatever best score it set up
+	// itself, so that run's score is dropped first.
+	function dropArcadeRun()
+	{
+		if (arcadeDirector !== null)
+			arcadeDirector.score = 0;
+		endArcadeMode();
+	}
+
 	// Start a fresh game in the named level: what resetGame() does, minus the
 	// title flow (cutscene, main menu), with the level loaded synchronously.
 	//   opts.seed    random seed (default SFTest.defaultSeed)
@@ -230,6 +240,7 @@
 		T.onBeforeStep = null;
 
 		endLairsMode();
+		dropArcadeRun();
 		resetController();
 		ResetAllAttacks();
 
@@ -268,6 +279,32 @@
 
 		clearLevelCache();
 		loadLevelFromURL(levelName, false);
+
+		if (opts.settle !== false)
+			T.settle();
+	};
+
+	// Start an arcade run the way the main menu's "Arcade" button does (it calls
+	// startArcadeMode()), with the same seeding and bookkeeping as newGame().
+	//   opts.seed    random seed (default SFTest.defaultSeed)
+	//   opts.settle  step until the player has landed and can act (default true)
+	T.newArcade = function(opts)
+	{
+		opts = opts || {};
+		installLevelLoader();
+
+		T.seed(typeof opts.seed === "undefined" ? T.defaultSeed : opts.seed);
+		T.frame = 0;
+		T.onBeforeStep = null;
+
+		dropArcadeRun();
+		resetController();
+		nextObjectID = 0;
+		activeCombatTimer = 0;
+		soundWaveTrigger = 0;
+		pause = false;
+
+		startArcadeMode();
 
 		if (opts.settle !== false)
 			T.settle();

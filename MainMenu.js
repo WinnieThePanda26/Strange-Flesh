@@ -92,6 +92,12 @@ function MainMenu()
 							menu.closing = true;
 						}
 					},
+					{ "element":"button", "label":"Arcade", "onClick":function()
+						{
+							// Wave survival mode (see Arcade.js). Starts a run straight away.
+							startArcadeMode();
+						}
+					},
 					{ "element":"button", "label":"Lairs", "onClick":function()
 						{
 							// Self-running showcase mode (see Lairs.js). Always available
@@ -135,7 +141,7 @@ function MainMenu()
 								ShowDevelopmentMenu();
 							} 
 						};
-		this.items.splice(3, 0, debugMenu);
+		this.items.splice(4, 0, debugMenu);
 	}
 	
 	if (enableDebug || devDebug || (settings.gameBeatenDomination || settings.gameBeatenCorruption || settings.gameBeatenWithoutSaves))
@@ -145,7 +151,7 @@ function MainMenu()
 							ShowGalleryMenu();
 						} 
 					};
-		this.items.splice(3, 0, galleryMenu);
+		this.items.splice(4, 0, galleryMenu);
 	}
 	
 	
@@ -290,7 +296,17 @@ MainMenu.prototype.Draw = function()
 		var hudScale = getHudScale();
 		sstext.scale = hudScale;
 		var xPosition = linearRemap(menuAnim,0,1,830,600) / hudScale;
-		var yPosition = Math.round((360 / hudScale - ((this.items.length-1) * 40)) / 2.0);
+		var designHeight = 360 / hudScale;
+
+		// 40 between entries, unless the list would then run off the bottom: with
+		// every optional entry present (Resume Game, Gallery, Debug) there are nine,
+		// which is more than fits at the largest HUD size. Close the list up just
+		// enough, and keep its last line (26 tall) 8 clear of the bottom edge.
+		var itemSpacing = Math.min(40, Math.floor((designHeight - 26 - 16) / Math.max(this.items.length - 1, 1)));
+		var yPosition = Math.round((designHeight - ((this.items.length-1) * itemSpacing)) / 2.0);
+		var lowestStart = designHeight - 8 - 26 - (this.items.length-1) * itemSpacing;
+		if (yPosition > lowestStart)
+			yPosition = lowestStart;
 
 		for (var i=0; i < this.items.length; i++)
 		{ 		
@@ -323,7 +339,7 @@ MainMenu.prototype.Draw = function()
 								//(text, x, y, fontSize, fillStyle, alpha, textAlign, textBaseline)
 				sstext.DrawText(this.items[i].label, xPosition, yPosition, 26,  "#FFFFFF", txtAlpha, "right");
 
-				yPosition += 40;
+				yPosition += itemSpacing;
 			}
     	}
 	}
