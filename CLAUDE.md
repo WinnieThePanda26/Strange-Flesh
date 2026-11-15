@@ -167,6 +167,25 @@ test are in `tests/README.md`. Run it after any gameplay change.
   as `known` and do not fail the run. Remove a test's `known` field once its bug is fixed.
 - Tests should pass on any seed: check with `--seed 2`, `--seed 3`, … before committing.
 
+## Sprites and art tools
+
+`docs/sprites.md` is the reference for the sprite sheet format (PNG + `.txt` JSON), the
+centre point and mirroring, animation timing, decorator layers and the frame-index hooks
+gameplay uses. Read it before changing an `animationSetup()` or adding art.
+
+- **`tools/sprites/spritesheet.py`** (`pack`, `unpack`, `compare`; Python 3 + Pillow) turns a
+  folder of frame PNGs into a sheet. New sheets are made with it, never by hand-editing
+  offsets. `node tools/sprites/roundtrip.js` proves it against the running game.
+- **`tools/sprite-viewer/`** (`http://localhost:8000/tools/sprite-viewer/` under `serve.py`) is
+  a third entry point beside the game and the editor: it plays any entity's animation
+  states, or any sheet, with centre point, hit boxes and the mirrored version. It keeps its
+  own copy of the engine `include()` list in `viewer.js`; a new engine file that entities
+  need at construction time must be added there too, as in `StrangeEdit.js`.
+- `docs/art-style.md` and `docs/art-options.md` cover what the art looks like and how to
+  get more. `tools/README.md` documents every tool.
+- **Never commit art.** `images/` and `new_images/` are gitignored; frames unpacked from a
+  sheet go in `new_images/` or outside the repo, never under `tools/` or `docs/`.
+
 ## Conventions & gotchas
 
 - **ES5 only**, `var`, prototype assignment, function-constructor "classes". Match the

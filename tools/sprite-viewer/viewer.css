@@ -1,0 +1,201 @@
+html, body
+{
+	height: 100%;
+	margin: 0;
+}
+
+body
+{
+	display: flex;
+	background: #000000;
+	font-family: "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	font-size: 13px;
+	color: #2a2018;
+	overflow: hidden;
+}
+
+#main
+{
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+#stage
+{
+	flex: 1 1 auto;
+	position: relative;
+	min-height: 0;
+}
+
+#gameCanvas
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+	image-rendering: pixelated;
+}
+
+#loading
+{
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 45%;
+	text-align: center;
+	color: #dddddd;
+	font-size: 16px;
+}
+
+#transport
+{
+	flex: 0 0 auto;
+	background: #AAAAAA;
+	padding: 6px 8px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+#transport .gap
+{
+	width: 10px;
+}
+
+#transportStatus
+{
+	margin-left: auto;
+	font-family: Menlo, Consolas, monospace;
+	font-size: 12px;
+}
+
+#strip
+{
+	flex: 0 0 auto;
+	height: 118px;
+	background: #2b2b30;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+#stripCanvas
+{
+	display: block;
+	height: 100px;
+	cursor: pointer;
+	image-rendering: pixelated;
+}
+
+#side
+{
+	flex: 0 0 340px;
+	overflow-y: auto;
+	background: #000000;
+	padding: 4px;
+	box-sizing: border-box;
+}
+
+.panel
+{
+	background: #AAAAAA;
+	padding: 8px;
+	margin-bottom: 4px;
+}
+
+.panelHeader
+{
+	text-align: center;
+	font-weight: 700;
+	margin-bottom: 8px;
+}
+
+.row
+{
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-bottom: 5px;
+}
+
+.row > span:first-child
+{
+	flex: 0 0 78px;
+	text-align: right;
+	font-weight: 700;
+	margin-right: 2px;
+}
+
+.row select, .row input[type="text"]
+{
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.row input[type="range"]
+{
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.row input[type="number"]
+{
+	width: 60px;
+}
+
+.check
+{
+	display: block;
+	margin-bottom: 3px;
+}
+
+#attackList label
+{
+	display: block;
+	margin: 2px 0 2px 18px;
+	font-family: Menlo, Consolas, monospace;
+	font-size: 11px;
+}
+
+#sheetControls
+{
+	display: none;
+}
+
+#sheetMessage
+{
+	font-size: 12px;
+	min-height: 14px;
+}
+
+#sheetMessage.error
+{
+	color: #8a0000;
+	font-weight: 700;
+}
+
+#centerValue
+{
+	margin-left: 6px;
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+#info
+{
+	margin: 0;
+	font-family: Menlo, Consolas, monospace;
+	font-size: 11px;
+	line-height: 1.45;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+button
+{
+	font-size: 12px;
+}
