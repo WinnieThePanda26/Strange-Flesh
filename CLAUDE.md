@@ -148,6 +148,25 @@ constructor name) + its whitelisted editor/runtime properties.
 The level editor (`StrangeEdit.js`, `editor.html`) reads/writes this same format and is the
 intended tool for level changes — hand-editing the JSON is possible but fragile.
 
+## Tests
+
+`node tests/run.js` runs the automated tests (about 40 s; needs the media pack, Chrome,
+and the playtest skill's `node_modules`). Details, the `SFTest` API and how to write a
+test are in `tests/README.md`. Run it after any gameplay change.
+
+- The game's source has **no test hooks**. `tests/hooks.js` and `tests/bot.js` are
+  injected into the page by the runner; keep it that way rather than adding
+  `if (testing)` branches to game code.
+- Tests step the game themselves: one frame = `updateAll()` then `drawAll()`, with a
+  seeded `Math.random`. The draw is required: some gameplay reads animation flags
+  (`lastFrameWasTransition`, `lastDisplayedFrameIndex`) that only `Animation.GetFrame()`
+  refreshes, and that is only called while drawing.
+- **Any gameplay change breaks the replay tests** (`tests/recordings/`), intended or not.
+  If the change was intended, re-baseline: `node tests/run.js --filter replay --update`.
+- `tests/scenarios/11-known-issues.js` holds tests for known game bugs; they are listed
+  as `known` and do not fail the run. Remove a test's `known` field once its bug is fixed.
+- Tests should pass on any seed: check with `--seed 2`, `--seed 3`, … before committing.
+
 ## Conventions & gotchas
 
 - **ES5 only**, `var`, prototype assignment, function-constructor "classes". Match the

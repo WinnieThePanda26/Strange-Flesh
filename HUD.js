@@ -124,6 +124,10 @@ HUD.prototype.Reset = function()
 	this.hudAlpha = 0;
 	this.hudHidden = false;
 	this.displayDrawPending = false;
+
+	// Drop any orbs still flying to the meters, so they can't land in (and be
+	// credited to) the next game.
+	this.orbs = [];
 }
 
 // The overlays pass draws onto the small internal canvas, where a shrunken HUD

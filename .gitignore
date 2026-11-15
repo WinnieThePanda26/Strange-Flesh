@@ -3,3 +3,6 @@ sound/
 new_images/
 .DS_Store
 .claude/skills/playtest/node_modules/
+
+# Test harness failure dumps (screenshots + state)
+tests/out/
