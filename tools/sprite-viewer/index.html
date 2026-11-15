@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Strange Flesh Sprite Viewer</title>
+    <!-- Everything below resolves from the repo root, so the game's own files and
+         their "images/..." paths load exactly as they do for index.html. -->
+    <base href="../../">
+    <link rel="stylesheet" href="tools/sprite-viewer/viewer.css">
+    <script src="tools/sprite-viewer/viewer.js"></script>
+  </head>
+  <body onload="SpriteViewer();">
+
+	<div id="main">
+		<div id="stage">
+			<canvas id="gameCanvas">
+				Your computer is a potato. For maximum enjoyment, cook and eat.
+			</canvas>
+			<div id="loading">Loading the game's art...</div>
+		</div>
+
+		<div id="transport">
+			<button id="playButton" title="Space">Pause</button>
+			<button id="restartButton" title="R">Restart</button>
+			<span class="gap"></span>
+			<button id="frameBackButton" title="Left arrow">&#9664; Frame</button>
+			<button id="frameForwardButton" title="Right arrow">Frame &#9654;</button>
+			<button id="tickBackButton" title="Comma">&#9664; Tick</button>
+			<button id="tickForwardButton" title="Full stop">Tick &#9654;</button>
+			<span class="gap"></span>
+			<label>Speed
+				<select id="speedSelect">
+					<option value="1">1x</option>
+					<option value="0.5">1/2</option>
+					<option value="0.25">1/4</option>
+					<option value="0.1">1/10</option>
+				</select>
+			</label>
+			<label><input id="loopCheckbox" type="checkbox" checked> Replay one-shots</label>
+			<span id="transportStatus"></span>
+		</div>
+
+		<div id="strip"><canvas id="stripCanvas"></canvas></div>
+	</div>
+
+	<div id="side">
+		<div class="panel">
+			<div class="panelHeader">What to look at</div>
+			<label class="row"><span>Entity</span><select id="entitySelect"></select></label>
+			<label class="row"><span>State</span><select id="stateSelect"></select></label>
+			<label class="row" title="Some states play a short transition when entered from a particular state"><span>Enter from</span><select id="fromSelect"></select></label>
+			<label class="row" title="Swaps frames for a variant: drunk, boner, broken"><span>Variant</span>
+				<input id="prefixInput" type="text" size="8" placeholder="e.g. drunk">
+				<button id="prefixApplyButton">Apply</button>
+				<button id="prefixClearButton">Clear</button>
+			</label>
+			<label class="row" title="Walk and run cycles play faster the faster the entity moves"><span>Move speed</span>
+				<input id="moveSpeedInput" type="range" min="0" max="20" step="0.5" value="8">
+				<span id="moveSpeedValue">8</span>
+			</label>
+		</div>
+
+		<div class="panel">
+			<div class="panelHeader">Now showing</div>
+			<pre id="info"></pre>
+		</div>
+
+		<div class="panel">
+			<div class="panelHeader">A sheet on its own</div>
+			<label class="row"><span>Loaded</span><select id="sheetSelect"></select></label>
+			<label class="row"><span>Path</span>
+				<input id="sheetPathInput" type="text" placeholder="new_images/my_sheet.txt">
+				<button id="sheetLoadButton">Load</button>
+			</label>
+			<label class="row" title="Pick the .png and the .txt together"><span>Files</span>
+				<input id="sheetFileInput" type="file" accept=".png,.txt" multiple>
+			</label>
+			<div id="sheetControls">
+				<label class="row"><span>Frames/sec</span><input id="sheetFpsInput" type="number" min="1" max="60" value="10"></label>
+				<div class="row"><span>Centre</span>
+					<button id="centerLeftButton" title="Shift + Left">&#9664;</button>
+					<button id="centerRightButton" title="Shift + Right">&#9654;</button>
+					<button id="centerUpButton" title="Shift + Up">&#9650;</button>
+					<button id="centerDownButton" title="Shift + Down">&#9660;</button>
+					<code id="centerValue"></code>
+				</div>
+			</div>
+			<label class="row" title="Draws another entity faintly behind, to compare size and footing"><span>Compare</span>
+				<select id="ghostEntitySelect"></select>
+				<select id="ghostStateSelect"></select>
+			</label>
+			<div id="sheetMessage"></div>
+		</div>
+
+		<div class="panel">
+			<div class="panelHeader">View</div>
+			<label class="row"><span>Facing</span>
+				<select id="viewSelect">
+					<option value="both">Both, side by side</option>
+					<option value="right">Right (as drawn)</option>
+					<option value="left">Left (mirrored)</option>
+				</select>
+			</label>
+			<label class="row"><span>Zoom</span>
+				<select id="zoomSelect">
+					<option value="0">Fit</option>
+					<option value="1">1x</option>
+					<option value="2">2x</option>
+					<option value="3">3x</option>
+					<option value="4">4x</option>
+					<option value="6">6x</option>
+					<option value="8">8x</option>
+				</select>
+			</label>
+			<label class="row"><span>Backdrop</span>
+				<select id="backdropSelect">
+					<option value="#5c4458">Arena plum</option>
+					<option value="#808080">Grey</option>
+					<option value="#1b1b1f">Dark</option>
+					<option value="#e8e4dc">Light</option>
+					<option value="#ff00ff">Magenta</option>
+				</select>
+			</label>
+			<label class="check"><input id="showCenterCheckbox" type="checkbox" checked> Centre point and ground line</label>
+			<label class="check"><input id="showFrameCheckbox" type="checkbox" checked> Frame edges</label>
+			<label class="check"><input id="showHitCheckbox" type="checkbox" checked> Hit box, body height, collision circle</label>
+			<label class="check"><input id="showAutoAttacksCheckbox" type="checkbox" checked> Attack boxes that name this state</label>
+			<div id="attackList"></div>
+		</div>
+
+	</div>
+
+  </body>
+</html>

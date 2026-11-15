@@ -62,6 +62,11 @@ contributors (and AI coding assistants) is in [`CLAUDE.md`](CLAUDE.md).
 - A **headless "playtest" harness** (`.claude/skills/playtest/`) that boots the game
   in headless Chrome and screenshots a given screen, so visual/UI changes can be
   verified by looking at them.
+- A **sprite pipeline** for future art ([`tools/`](tools/README.md)): a packer that
+  turns a folder of frame PNGs into a sprite sheet, and a **sprite viewer** page that
+  plays any entity's animations with its centre point, hit boxes and mirrored version.
+  The format is documented in [`docs/sprites.md`](docs/sprites.md). Still no new art
+  in this repo.
 
 Contributions in the same spirit (QoL, performance, portability, accessibility)
 are welcome — open a pull request.
