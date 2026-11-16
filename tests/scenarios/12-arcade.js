@@ -510,6 +510,108 @@ module.exports = [
   },
 
   {
+    // A ColombianRescue only moves by leaping, and once on screen it only dodges.
+    // It used to stand at the wall it came in by for the rest of the run: held
+    // there by the walk-in order (which it cannot obey), or too far from the
+    // player to notice him, or dodging into the wall.
+    name: 'arcade: a ColombianRescue comes in off the wall and stays off it',
+    async run(t) {
+      await install(t);
+      const r = await t.eval(() => {
+        var out = [];
+        // The player in the middle, toward one side, and in a corner.
+        [0, 1000, -1250].forEach(function (playerX) {
+          SFTest.newArcade();
+          var d = arcadeDirector;
+          SFTest.stepUntil(function () { return d.wave === 1; }, 600);
+          d.queue = ['ColombianRescue', 'ColombianRescue', 'ColombianRescue'];
+
+          var row = { playerX: playerX, samples: 0, nearWall: 0, hits: 0, outsideLate: 0, count: 0 };
+          for (var f = 0; f < 3000; f++) {
+            if (player.health < player.maxHealth) row.hits += 1;
+            player.health = player.maxHealth;               // he just stands there; this is about where they go
+            player.posX = playerX;
+            player.velX = 0;
+            SFTest.step(1);
+            if (f < 600) continue;                          // give them ten seconds to arrive
+            row.count = d.enemies.length;
+            for (var i = 0; i < d.enemies.length; i++) {
+              var e = d.enemies[i].entity;
+              row.samples += 1;
+              if (Math.abs(e.posX) > ARCADE_HALF_WIDTH - e.collisionRadius - 200) row.nearWall += 1;
+              if (e.newlySpawned || Math.abs(e.posX) > ARCADE_HALF_WIDTH) row.outsideLate += 1;
+            }
+          }
+          SFTest.checkSane();
+          out.push(row);
+        });
+        return out;
+      });
+
+      for (const row of r) {
+        const where = `with the player at x=${row.playerX}`;
+        assert.strictEqual(row.count, 3, `three of them should be in the arena ${where}`);
+        assert.strictEqual(row.outsideLate, 0, `one was still outside the walls after ten seconds ${where}`);
+        const share = row.nearWall / row.samples;
+        assert.ok(share < 0.4, `they spent ${Math.round(share * 100)}% of the time against a wall ${where}`);
+        assert.ok(row.hits > 0, `they never hit a player standing still ${where}`);
+      }
+      t.log(r.map((row) => `player at ${row.playerX}: ${Math.round(100 * row.nearWall / row.samples)}% near a wall, ` +
+        `${row.hits} hits`).join('; '));
+    },
+  },
+
+  {
+    name: 'arcade: a drop nobody picks up blinks and goes; in the story it stays',
+    async run(t) {
+      await install(t);
+      const r = await t.eval(() => {
+        // A popper with a full stash: nothing collects it.
+        function watchPopper(frames) {
+          poppers = maxPoppers;
+          var orb = new CollectableOrb(ORB_POPPERS);
+          orb.posX = player.posX + 500;
+          orb.posY = player.posY;
+          level.entities.AddEntity(orb);
+          var out = { goneAt: -1, dimmedAt: -1, alphaBeforeBlink: null };
+          for (var f = 1; f <= frames; f++) {
+            player.health = player.maxHealth;
+            poppers = maxPoppers;
+            SFTest.step(1);
+            if (out.dimmedAt === -1 && orb.alpha < 1) out.dimmedAt = f;
+            if (out.dimmedAt === -1) out.alphaBeforeBlink = orb.alpha;
+            if (out.goneAt === -1 && level.entities.list.indexOf(orb) === -1) out.goneAt = f;
+          }
+          out.collected = orb.collected;
+          out.stash = poppers;
+          return out;
+        }
+
+        var out = { lifetime: ARCADE_DROP_LIFETIME, blink: ARCADE_DROP_BLINK };
+
+        SFTest.newArcade({ settle: false });
+        arcadeDirector.intermission = 1000000;              // no waves: nobody to knock the orb about
+        SFTest.settle();
+        out.arcade = watchPopper(ARCADE_DROP_LIFETIME + 120);
+
+        SFTest.newGame('arena');
+        out.story = watchPopper(ARCADE_DROP_LIFETIME + 120);
+        return out;
+      });
+
+      assert.strictEqual(r.arcade.collected, false, 'the popper was picked up; the test needs it left alone');
+      assert.strictEqual(r.arcade.alphaBeforeBlink, 1, 'the orb was dimmed before its time');
+      assert.ok(r.arcade.dimmedAt >= r.lifetime - r.blink - 2 && r.arcade.dimmedAt <= r.lifetime - r.blink + 12,
+        `it started to blink at frame ${r.arcade.dimmedAt}, expected about ${r.lifetime - r.blink}`);
+      assert.ok(r.arcade.goneAt >= r.lifetime && r.arcade.goneAt <= r.lifetime + 5,
+        `it went at frame ${r.arcade.goneAt}, expected just after ${r.lifetime}`);
+      assert.strictEqual(r.story.goneAt, -1, 'a drop expired in a story level');
+      assert.strictEqual(r.story.dimmedAt, -1, 'a drop blinked in a story level');
+      t.log(`blinks from frame ${r.arcade.dimmedAt}, gone at ${r.arcade.goneAt}`);
+    },
+  },
+
+  {
     name: `arcade: a bot clears the first ${BOT_WAVES} waves without errors`,
     timeout: 240000,
     async run(t) {

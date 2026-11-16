@@ -55,7 +55,7 @@ When a test fails, a screenshot and a dump of the game state are written to
 | `09-bot.js` | A bot plays level 0 and level 1 from spawn to exit |
 | `10-replay.js` | Every recording in `tests/recordings/` still plays out exactly as recorded |
 | `11-known-issues.js` | Problems in the game that the tests document (see "Known issues") |
-| `12-arcade.js` | Arcade mode: wave 1 comes in from off-screen and wave 2 waits for it to be cleared; knockouts and corruptions both score; the best score persists and the story save is untouched; quitting a run leaves a clean story game; a bot clears six waves |
+| `12-arcade.js` | Arcade mode: wave 1 comes in from off-screen and wave 2 waits for it to be cleared; knockouts and corruptions both score; the best score persists and the story save is untouched; quitting a run leaves a clean story game; a ColombianRescue comes in and stays off the walls; an uncollected drop expires (and does not in the story); a bot clears six waves |
 
 Not covered: menus and cutscenes (they run off the audio clock), how anything looks or
 sounds, gamepad and touch input, the level editor, and the real `setInterval` timing.

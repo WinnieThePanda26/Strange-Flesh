@@ -40,12 +40,17 @@ var ARCADE_LIVES = 3;                      // the run ends when the last one is 
 var ARCADE_WAVE_HEALTH_ORBS = 3;           // health orbs dropped when a wave is cleared (5 health each, of 200)
 var ARCADE_LIFE_EVERY_WAVES = 5;           // an extra life drops after every 5th wave
 var ARCADE_METER_ORBS = 150;               // orbs that fill the HUD's domination / corruption bars
+var ARCADE_DROP_LIFETIME = 15 * 60;        // a drop nobody picks up (a popper when the stash is full, say) lasts this long
+var ARCADE_DROP_BLINK = 3 * 60;            // ...and blinks for this long at the end of it
 
 // Pacing (frames at 60 per second)
 var ARCADE_FIRST_WAVE_DELAY = 150;         // the bartender takes about this long to land
 var ARCADE_INTERMISSION = 180;             // breather between waves
 var ARCADE_SPAWN_INTERVAL = 75;            // gap between two enemies walking in
 var ARCADE_ENTRY_SPEED = 6;                // slowest an enemy outside the walls closes on them, per frame
+var ARCADE_WALK_IN_TIMEOUT = 300;          // longest a new enemy's AI is held to walking to his first spot
+var ARCADE_NOTICE_DISTANCE = 1800;         // most enemies ignore a player further off than 2000; keep them nearer than this
+var ARCADE_WALL_ZONE = 250;                // a leaping enemy this close to a side wall dodges back toward the middle
 var ARCADE_WAVE_TIME_LIMIT = 90 * 60;      // a wave not cleared in this long is joined by the next one anyway
 var ARCADE_BANNER_FRAMES = 150;            // how long a "Wave 3" banner stays up
 
@@ -403,6 +408,8 @@ ArcadeDirector.prototype.Update = function()
 			hostile += 1;
 	}
 
+	this.ExpireDrops();
+
 	if (this.waveActive)
 	{
 		if (this.spawnTimer > 0)
@@ -479,6 +486,26 @@ ArcadeDirector.prototype.DropOrb = function(kind)
 	level.entities.AddEntity(new CollectableOrb(kind, false, source, 0, 0, 1));
 };
 
+// A run has no end, so what is dropped and not picked up would pile up on the
+// floor: poppers while the stash is full, health while he is unhurt. Anything
+// lying there too long blinks, then goes. (An orb counts its own frames on the
+// floor in orb.timer, and draws at orb.alpha until it is picked up.)
+ArcadeDirector.prototype.ExpireDrops = function()
+{
+	var list = level.entities.list;
+	for (var i = 0; i < list.length; i++)
+	{
+		var orb = list[i];
+		if (!(orb instanceof CollectableOrb) || orb.collected)
+			continue;
+
+		if (orb.timer > ARCADE_DROP_LIFETIME)
+			orb.Die();
+		else if (orb.timer > ARCADE_DROP_LIFETIME - ARCADE_DROP_BLINK)
+			orb.alpha = (Math.floor(orb.timer / 6) % 2 === 0) ? 1.0 : 0.25;
+	}
+};
+
 // Send one enemy in: put it outside a side wall, which is always off-screen, and
 // have it walk to a spot on that side of the player.
 ArcadeDirector.prototype.SpawnEnemy = function(name)
@@ -487,10 +514,17 @@ ArcadeDirector.prototype.SpawnEnemy = function(name)
 	if (typeof(MyClass) !== "function")
 		return;
 
+	var e = new MyClass();
+
+	// Left and right take turns. The exception is an enemy who cannot be walked
+	// over to the player (see below): he does not come in by a wall so far off that
+	// he would stand there without noticing him, the arena being wider than most
+	// enemies can see.
 	var side = this.nextSide;
 	this.nextSide = -this.nextSide;
+	if (!ArcadeCanWalk(e) && Math.abs(side * ARCADE_HALF_WIDTH - player.posX) > ARCADE_NOTICE_DISTANCE)
+		side = -side;
 
-	var e = new MyClass();
 	var margin = e.collisionRadius + 40;
 	var spawnX = side * (ARCADE_HALF_WIDTH + 300);
 	var spawnY = ARCADE_BACK_Y + margin + Math.random() * (ARCADE_FRONT_Y - ARCADE_BACK_Y - 2 * margin);
@@ -508,11 +542,74 @@ ArcadeDirector.prototype.SpawnEnemy = function(name)
 	e.newlySpawned = true;
 	e.newlySpawnedTargetX = targetX;
 	e.newlySpawnedTargetY = spawnY;
+
+	// The walk is an order at the head of his AI's queue, and nothing else runs
+	// until it is done. So it is only given to an enemy who can walk (a
+	// ColombianRescue moves by leaping and would stand at the wall obeying it for
+	// ever; his own AI heads for the screen, and KeepInArena sees him in), it is
+	// satisfied by getting near the spot, and it times out.
+	if (e.ai !== null && ArcadeCanWalk(e))
+	{
+		var walkIn = new GoToPointAction(targetX, spawnY, 60, false);
+		walkIn.timeout = ARCADE_WALK_IN_TIMEOUT;
+		e.ai.QueueAction(walkIn);
+	}
 	if (e.ai !== null)
-		e.ai.QueueAction(new GoToPointAction(targetX, spawnY, 10, false));
+		ArcadeSteerOffWalls(e.ai);
 
 	level.entities.AddEntity(e);
 	this.enemies.push({ "entity": e, "cost": ArcadeCostOf(name), "lastX": spawnX });
+};
+
+// True if this enemy moves when he holds a direction on the ground. (His top
+// speed depends on his state, so ask about the walking state.)
+function ArcadeCanWalk(e)
+{
+	if (e.MustJumpToMove || typeof(e.GetMoveMaxVelocity) !== "function")
+		return true;   // GoToPointAction jumps for him / nothing to ask
+
+	var state = e.state;
+	e.state = States.Walk;
+	var speed = e.GetMoveMaxVelocity();
+	e.state = state;
+	return speed > 0;
+};
+
+// The leaping enemies (ColombianRescue, FartherFigure) never close on the player
+// once they are on screen: each leap is a dodge, left or right according to
+// whether they stand above or below him, or a hop away if he is near. In a
+// corridor that keeps them hovering about. In a box it walks them into a side
+// wall and holds them there, hopping on the spot.
+//
+// So in the arena, when one of them plans a leap while next to a side wall, the
+// leap is made a dodge toward the middle. This wraps the one AI object it is
+// given and touches nothing else; an AI whose actions have no dodge to steer
+// (every other enemy) is left exactly as it was.
+function ArcadeSteerOffWalls(ai)
+{
+	if (typeof(ai.GenerateNewAction) !== "function" || !ai.hasOwnProperty("actionQueue"))
+		return;
+
+	var generate = ai.GenerateNewAction;
+	ai.GenerateNewAction = function()
+	{
+		generate.call(this);
+
+		var owner = this.owner;
+		if (!arcadeMode || Math.abs(owner.posX) < ARCADE_HALF_WIDTH - owner.collisionRadius - ARCADE_WALL_ZONE)
+			return;
+
+		for (var i = 0; i < this.actionQueue.length; i++)
+		{
+			var action = this.actionQueue[i];
+			if (action.hasOwnProperty("dodge") && action.hasOwnProperty("dodgeHoriz") && action.hasOwnProperty("dodgeRight"))
+			{
+				action.dodge = true;
+				action.dodgeHoriz = true;
+				action.dodgeRight = (owner.posX < 0);
+			}
+		}
+	};
 };
 
 // Get an enemy into the arena and keep him there.
@@ -552,6 +649,13 @@ ArcadeDirector.prototype.KeepInArena = function(record)
 			e.newlySpawnedTargetY = e.posY;
 		}
 	}
+
+	// The same goes for anyone the player has run a whole arena away from: out of
+	// sight and too far off to notice him, he closes the distance.
+	var gap = e.posX - player.posX;
+	if (Math.abs(gap) > ARCADE_NOTICE_DISTANCE && !camera.boundingRect.PointIntersect(e.posX, e.posY))
+		e.posX -= ((gap > 0) ? 1 : -1) * Math.min(ARCADE_ENTRY_SPEED, Math.abs(gap) - ARCADE_NOTICE_DISTANCE);
+
 	record.lastX = e.posX;
 
 	// With no collision out there he can also drift past the front or back of the
