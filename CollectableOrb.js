@@ -205,12 +205,17 @@ CollectableOrb.prototype.Draw = function()
 {
 	ctx.translate(this.posX, this.posY);
 	
+	// Normally 1. Arcade blinks a drop that is about to expire (see Arcade.js);
+	// once picked up it flies to the HUD at full strength whatever it was.
+	ctx.globalAlpha = this.collected ? 1.0 : this.alpha;
+
 	var image = this.animation.GetFrame();
 	image.DrawSprite3x(-30,-30-this.posZ);
 	
 	ctx.globalCompositeOperation = "screen";
 	this.glowimage.DrawSprite3x(-60,-60-this.posZ);
 	ctx.globalCompositeOperation = "source-over";
+	ctx.globalAlpha = 1.0;
 	
 	if (debug === 2)
 	{    	

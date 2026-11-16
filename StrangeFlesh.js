@@ -123,6 +123,11 @@ var lairsDirector = null;
 var lairsStats = null;
 var lairsTrainer = null;
 
+// Arcade: wave survival mode (see Arcade.js). While arcadeMode is true the level is
+// the arcade arena and arcadeDirector (an overlay) runs the waves and the score.
+var arcadeMode = false;
+var arcadeDirector = null;
+
 // Define global acceleration due to gravity.
 var gravity = 2.4;
 
@@ -212,6 +217,7 @@ include("DebugOverlay.js");
 include("Checkpoint.js");
 include("Lairs.js");
 include("LairsTrainer.js");
+include("Arcade.js");
 // almost
 
 function StrangeFlesh() 
@@ -307,6 +313,9 @@ function resetGame()
 	// HUD back and drops the showcase stats panel (see endLairsMode in Lairs.js).
 	endLairsMode();
 
+	// Likewise for an arcade run (see endArcadeMode in Arcade.js).
+	endArcadeMode();
+
 	// Create the player
 	player = new Bartender();
 	player.disableSpawnOnScroll = true;
@@ -348,6 +357,10 @@ function resetGame()
 
 function saveGame()
 {
+	// The save game belongs to the story. An arcade run never writes it.
+	if (arcadeMode)
+		return;
+
 	var levelCacheDescriptors = {};
 	
 	for (var property in levelcache) 
@@ -1486,7 +1499,12 @@ function updateAll()
 		}
 		else
 		{
-			if (lives <= 0 && !lairsMode)
+			if (lives <= 0 && arcadeMode)
+			{
+				// Arcade has its own ending: the results screen (see Arcade.js).
+				arcadeDirector.EndRun();
+			}
+			else if (lives <= 0 && !lairsMode)
 			{
 				ShowGameOverCutscene();
 			}

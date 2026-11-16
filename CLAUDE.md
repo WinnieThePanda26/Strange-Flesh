@@ -64,6 +64,14 @@ state + per-level descriptors). `saveSettings()`/`loadSettings()` use `localStor
 storage. Debug keys (toggle with `B`, then F/G/H/T/Y/P/etc.) are wired in `keyDown()` and only
 active when debug is unlocked.
 
+**Modes besides the story:** the main menu also starts **Lairs** (`Lairs.js`, a self-running
+showcase) and **Arcade** (`Arcade.js`, wave survival for a score). Both build their level in
+code, set a global flag (`lairsMode`, `arcadeMode`) and are torn down by `endLairsMode()` /
+`endArcadeMode()`, which `resetGame()` calls: every way out of a mode goes through
+`resetGame()`. Arcade's director is an overlay; its tunables (waves, scoring, lives) are the
+`ARCADE_*` vars at the top of `Arcade.js`. The best score is `localStorage["ArcadeBest"]`;
+`saveGame()` does nothing while `arcadeMode` is set, so a run can't touch the story save.
+
 ## Entities
 
 There is **no class inheritance**. Entities are constructor functions whose prototypes are
